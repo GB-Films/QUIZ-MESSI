@@ -6,6 +6,8 @@ node_modules/
 *.tar.gz
 *-firebase-adminsdk-*.json
 firebase-service-account*.json
+firebase-server-auth*.json
+server-auth*.json
 ranking-export*.json
 .firebase/
 firebase-debug.log*

@@ -57,11 +57,40 @@ Abrir `http://127.0.0.1:4173/`.
 
 Verificado en 320×568, 375×667 y 390×844. También se comprobaron un acierto, un error, el tiempo agotado, reintentos de respuestas, recuperación de partidas y conservación del mejor récord.
 
+## Retomar desde otra computadora
+
+El repositorio completo es [GB-Films/QUIZ-MESSI](https://github.com/GB-Films/QUIZ-MESSI), rama `main`. Incluye la web, las veintidós fotos, las preguntas, el código del servidor, las pruebas, las migraciones y las reglas e índices de Firebase.
+
+```sh
+git clone https://github.com/GB-Films/QUIZ-MESSI.git
+cd QUIZ-MESSI
+npm run check
+npm test
+npm start
+```
+
+Usar Node.js 24. La vista local no necesita claves de Firebase y usa resultados de prueba. Los jugadores y las partidas públicas siguen en la nube al cambiar de computadora.
+
+Estado del trabajo al 6 de octubre de 2026:
+
+- La web está publicada en https://gb-films.github.io/QUIZ-MESSI/ y usa la API https://messi-quiz-albiceleste.guidoboetsch.chatgpt.site.
+- Firestore y Firebase Authentication están activos en el proyecto `quiz-messi-8674d`; la base está en `southamerica-east1`. El servidor valida y guarda las partidas y los mejores resultados. Se conservaron los cuatro jugadores y las nueve partidas del almacenamiento anterior, y se verificó una partida real con reintentos y respuestas simultáneas.
+- El usuario autorizó activar **Blaze con la cuenta Gran Berta Films**. Google rechazó la vinculación porque esa cuenta alcanzó su cuota de proyectos con facturación (`FAILED_PRECONDITION`, `QuotaFailure`). El proyecto continúa en Spark. Queda pendiente que el usuario autorice enviar una [solicitud de un proyecto adicional a Google](https://support.google.com/code/contact/billing_quota_increase), o elija la cuenta alternativa «Pago de Firebase». No cambiar de cuenta ni desvincular otros proyectos por cuenta propia.
+- El objetivo es un millón de jugadores **acumulados**. Las pruebas simuladas de 100 jugadores y la verificación real confirman coherencia del guardado; todavía hacen falta protección contra abuso, seguimiento de consumo y pruebas de carga reales antes de una difusión masiva. Ver [backend/SCALING.md](backend/SCALING.md).
+
+Para seguir con Codex en otra computadora, abrir este repositorio y pedirle que lea este README y `backend/SCALING.md`. Iniciar sesión con la misma cuenta de Codex/Sites y la cuenta de Google del proyecto para administrar los recursos existentes. No crear otro proyecto de Firebase, otro Site ni volver a importar la copia anterior de los resultados.
+
+El servidor se publica por **Sites**, separado de GitHub Pages. Su ID es `appgprj_6ac470987bf081918291e55728c8818a`. La versión publicada del guardado en Firebase es la 3, con fuente `46977916a3566895229c6a65c49387285bc99ad9` en el repositorio administrado por Sites. Abrir primero esa fuente mediante el flujo de Sites antes de editar o publicar el servidor. Sincronizar desde este repositorio los archivos de `backend/` y `dist/questions.js` que se hayan modificado; construir con `npm run build` en el checkout del servicio. Las fotos y la interfaz actual están en este repositorio de GitHub Pages.
+
+`backend/hosting.sites.json` conserva el manifiesto de referencia del servicio, sin credenciales. El checkout de Sites utiliza ese manifiesto como `.openai/hosting.json`; la compilación del servidor se realiza allí para mantener los archivos del servidor fuera de la web de Pages.
+
+La configuración activa del servidor está guardada en Sites: `FIREBASE_PROJECT_ID=quiz-messi-8674d`, `FIREBASE_GAMES_ENABLED=true` y los secretos `FIREBASE_API_KEY` y `FIREBASE_REFRESH_TOKEN`. No hay una pausa de mantenimiento activa. Se usa la identidad dedicada de Authentication `quiz-ranking-server`; las altas públicas de usuarios están bloqueadas. La organización impide crear claves de cuentas de servicio y esa protección sigue vigente. Los secretos ya configurados siguen funcionando en la nube; no hace falta copiarlos a la nueva computadora ni publicarlos en GitHub. Para trabajo administrativo local, renovar el acceso de Firebase en esa computadora.
+
 ## Servicio del ranking
 
 `backend/index.js` contiene la API y `drizzle/` la migración de SQLite para D1. El servicio se aloja en el sitio de Messi previamente creado, mientras el enlace de juego continúa en GitHub Pages. `dist/` contiene únicamente la web pública de Pages; el archivo compilado del servidor se prepara en el checkout del servicio, separado del despliegue de Pages.
 
-Para generar nuevas migraciones se instalan las herramientas con `npm install` y se ejecuta `npm run db:generate`. Las migraciones aplicadas se conservan sin modificar. El manifiesto de alojamiento y los secretos no se publican en este repositorio.
+Para generar nuevas migraciones se instalan las herramientas con `npm install` y se ejecuta `npm run db:generate`. Las migraciones aplicadas se conservan sin modificar. El manifiesto activo de alojamiento permanece en el checkout del servicio; este repositorio incluye su referencia en `backend/hosting.sites.json`. Los secretos no se publican.
 
 ### Firebase
 
