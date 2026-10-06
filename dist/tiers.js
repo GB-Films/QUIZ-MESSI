@@ -234,7 +234,7 @@ export const tiers = [
  {
   "min": 125,
   "max": 125,
-  "name": "Messi Grido",
+  "name": "Messi 2012",
   "era": "EL NIVEL DEFINITIVO",
   "image": "10-grido.jpg",
   "position": "50% 50%",

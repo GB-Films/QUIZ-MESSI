@@ -33,7 +33,7 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 | 111–114 | Messi de rodillas · EL FESTEJO ANTE INGLATERRA · MUNDIAL 2026 |
 | 115–123 | Messi campeón del mundo · QATAR 2022 |
 | 124 | Messi de la última final · MEDALLA DE PLATA · MUNDIAL 2026 |
-| 125 | Messi Grido · EL NIVEL DEFINITIVO |
+| 125 | Messi 2012 · EL NIVEL DEFINITIVO |
 
 Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa exactamente la foto elegida y aportada por el usuario: Maradona abraza y besa a Messi, de espaldas con la camiseta 10. Su enlace abre esa imagen.
 
