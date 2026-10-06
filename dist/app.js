@@ -1,106 +1,105 @@
-import { questions, goalReference, orderedQuestions, difficultyLabels } from './questions.js';
-
-const screen = document.querySelector('#screen');
-const counter = document.querySelector('#counter');
-const stageLabel = document.querySelector('#stage-label');
-const storageKey = 'messi-quiz-125-seleccion-v3';
-const rounds = orderedQuestions;
-let answers = readProgress();
-let options = [];
-
-function readProgress() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey));
-    if (!Array.isArray(saved) || saved.length > rounds.length) return [];
-    if (saved.some((a, i) => a.id !== rounds[i].id || !rounds[i].options.includes(a.selected))) return [];
-    return saved;
-  } catch { return []; }
+import { difficultyLabels } from './questions.js';
+const API=['127.0.0.1','localhost'].includes(location.hostname)?'/api':'https://messi-quiz-albiceleste.guidoboetsch.chatgpt.site/api';
+const app=document.querySelector('#app'), KEY='messi-survival-v1';
+const avatars=[
+ {name:'El crack',image:'./assets/messi-crack.jpg',source:'https://dibujando.net/dib/lionel-messi-278115'},
+ {name:'El capitán',image:'./assets/messi-capitan.webp',source:'https://www.tycsports.com/gaming/como-crear-imagenes-estilo-looney-tunes-con-inteligencia-artificial-id719064.html'},
+ {name:'El pibe',image:'./assets/messi-joven.png',source:'https://www.pngfind.com/mpng/hxbmxJi_drawing-messi-angel-caricaturas-de-jugadores-de-futbol/'},
+ {name:'El campeón',image:'./assets/messi-campeon.jpg',source:'https://ar.pinterest.com/pin/887490670288798326/'}
+];
+let saved=readSaved(), avatar=saved.avatar||3, game=null, timer=null, deadline=0, busy=false;
+const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const aciertos=n=>`${n} ${n===1?'acierto':'aciertos'}`;
+function readSaved(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {};}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(saved));}catch{}}
+function stopTimer(){clearInterval(timer);timer=null;}
+function screen(mode,html){stopTimer();document.body.dataset.screen=mode;app.innerHTML=html;}
+function portrait(id,cls='portrait'){const a=avatars[id-1]||avatars[2];return `<img class="${cls}" src="${a.image}" alt="Messi con la camiseta argentina" draggable="false">`;}
+async function api(action,body){
+ const sent=performance.now(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+ try{
+  const response=await fetch(`${API}/${action}`,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:controller.signal});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||'No se pudo conectar con el ranking.');
+  if(data.remainingMs!==undefined)data.remainingMs=Math.max(0,data.remainingMs-(performance.now()-sent)/2);
+  return data;
+ }catch(error){if(error.name==='AbortError'||error instanceof TypeError)throw new Error('Se cortó la conexión. Reconectá para seguir. El reloj de la partida sigue corriendo.');throw error;}
+ finally{clearTimeout(timeout);}
 }
-function saveProgress() {
-  try { localStorage.setItem(storageKey, JSON.stringify(answers)); } catch { /* El juego sigue si el navegador no admite almacenamiento. */ }
+function focusTitle(){app.querySelector('h1,h2')?.focus({preventScroll:true});}
+function setup(){
+ busy=false;game=null;
+ screen('setup',`<div class="setup-wrap"><header class="brand"><b>10</b><span>MESSI<small>EL QUIZ ALBICELESTE</small></span><span class="stars">★ ★ ★</span></header>
+ <p class="eyebrow">125 PREGUNTAS · DE FÁCIL A EXPERTO</p><h1 tabindex="-1">UNA VIDA.<br><em>TODO POR EL 10.</em></h1>
+ <p class="hook">Preparate. Concentrate. Tenés <strong>10 segundos por pregunta</strong> y una sola vida. Si fallás o se acaba el tiempo, termina tu partida.</p><p class="challenge">Demostrá cuánto sabés realmente de Messi con Argentina.</p>
+ <form id="setup-form"><label class="field-label" for="nickname">TU NOMBRE EN EL RANKING</label><input id="nickname" name="nickname" minlength="2" maxlength="20" required autocomplete="nickname" placeholder="¿Cómo te llaman?" value="${esc(saved.nickname||'')}">
+ <fieldset><legend>¿QUÉ MESSI SOS?</legend><div class="avatars">${avatars.map((a,i)=>`<button type="button" class="avatar ${avatar===i+1?'selected':''}" data-avatar="${i+1}" aria-pressed="${avatar===i+1}">${portrait(i+1)}<span>${a.name}</span><span class="check" aria-hidden="true">✓</span></button>`).join('')}</div></fieldset>
+ <p class="privacy">Tu nombre, personaje y mejor resultado serán públicos. Tu récord se reconoce en este navegador.</p><button class="primary" id="start" type="submit">Estoy listo. Vamos.</button><p class="error" id="setup-error" role="alert"></p></form>
+ <button class="link-button" id="show-ranking">Ver ranking global</button><details class="credits"><summary>Sobre el quiz y las ilustraciones</summary><p>Edición de 125 preguntas: <a href="https://www.afa.com.ar/es/posts/125-goles-207-partidos-y-una-historia-que-cambio-para-siempre-a-la-seleccion-argentina" target="_blank" rel="noopener">125 goles de Messi con Argentina según AFA</a>. Incluye Selección mayor, Sub-20 y Juegos Olímpicos. Quiz independiente.</p><p>Ilustraciones existentes: ${avatars.map(a=>`<a href="${a.source}" target="_blank" rel="noopener">${a.name}</a>`).join(' · ')}. Sus derechos pertenecen a sus autores; el Messi joven se ofrece para uso personal.</p><p>Ranking: mejor resultado por navegador. Ganan más aciertos; en un empate, menor tiempo acumulado. Si ambos coinciden, el récord alcanzado primero.</p></details></div>`);
+ app.querySelectorAll('[data-avatar]').forEach(b=>b.onclick=()=>{avatar=Number(b.dataset.avatar);app.querySelectorAll('[data-avatar]').forEach(x=>{const selected=Number(x.dataset.avatar)===avatar;x.classList.toggle('selected',selected);x.setAttribute('aria-pressed',String(selected));});});
+ app.querySelector('#setup-form').onsubmit=async event=>{
+  event.preventDefault();if(busy)return;busy=true;
+  const nickname=app.querySelector('#nickname').value.trim(),button=app.querySelector('#start');button.disabled=true;button.textContent='Entrando a la cancha…';
+  try{const data=await api('start',{nickname,avatar,playerToken:saved.playerToken});saved={...saved,nickname,avatar,playerToken:data.playerToken,gameToken:data.gameToken};persist();game=data;showGame(data);focusTitle();}
+  catch(error){app.querySelector('#setup-error').textContent=error.message;button.disabled=false;button.textContent='Estoy listo. Vamos.';}finally{busy=false;}
+ };
+ app.querySelector('#show-ranking').onclick=showRanking;
 }
-function score() { return answers.filter(a => questions[a.id - 1].answer === a.selected).length; }
-function shuffle(items) {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
+function showGame(data){
+ game=data;if(data.phase==='done')return results(data);if(data.phase==='ready')return readyScreen(data);
+ const q=data.question;
+ screen('game',`<section class="game-wrap"><header class="game-top"><span>PREGUNTA <b>${data.number} / ${data.total}</b></span><span class="life">♥ <b>1 VIDA</b></span></header>
+ <div class="progress"><span style="width:${data.score/data.total*100}%"></span></div><div class="game-meta"><span>${esc(difficultyLabels[q.difficulty-1])}</span><span id="score">${aciertos(data.score)}</span></div>
+ <div class="question-block"><div class="clock" role="timer" aria-label="Tiempo restante"><b id="seconds">10</b><small>SEGUNDOS</small></div><h2 tabindex="-1">${esc(q.text)}</h2></div>
+ <div class="options">${q.options.map((option,i)=>`<button class="option" data-choice="${i}"><span class="letter" aria-hidden="true">${'ABCD'[i]}</span><span>${esc(option)}</span></button>`).join('')}</div>
+ <footer class="game-bottom"><p id="status" aria-live="polite">Una respuesta. Jugátela.</p><button class="primary" id="next" disabled>Siguiente pregunta</button></footer></section>`);
+ app.querySelectorAll('[data-choice]').forEach(button=>button.onclick=()=>answer(Number(button.dataset.choice)));app.querySelector('#next').onclick=next;
+ deadline=performance.now()+data.remainingMs;tick();timer=setInterval(tick,80);
 }
-function focusHeading() { screen.querySelector('h2')?.focus({ preventScroll: true }); }
-function startScreen() {
-  stageLabel.textContent = 'EL DESAFÍO DEL 10';
-  counter.textContent = `${goalReference.total} PREGUNTAS`;
-  const complete = answers.length === rounds.length;
-  screen.innerHTML = `<p class="start-kicker">DE HINCHA A EXPERTO</p>
-    <h2 tabindex="-1">El desafío está<br>en la cancha.</h2>
-    <p class="start-copy">125 preguntas sobre Leo con Argentina. Sus goles, sus partidos, las Copas América y los Mundiales que no se olvidan.</p>
-    <div class="rules">
-      <div class="rule"><span class="rule-number">01</span><span><strong>Cuatro opciones.</strong> Una respuesta correcta.</span></div>
-      <div class="rule"><span class="rule-number">02</span><span><strong>De fácil a experto.</strong> La dificultad sube.</span></div>
-      <div class="rule"><span class="rule-number">03</span><span><strong>Cada acierto suma.</strong> Llegá al final.</span></div>
-    </div>
-    <button class="primary" id="start">${complete ? 'Ver mi resultado' : answers.length ? 'Continuar el quiz' : 'Empezar el quiz'}</button>
-    ${answers.length ? '<button class="secondary" id="restart">Empezar de nuevo</button>' : ''}
-    <p class="small-note">${answers.length ? `${answers.length} de 125 respondidas · ${score()} aciertos` : 'Sin reloj. Tu avance se guarda en este dispositivo.'}</p>`;
-  document.querySelector('#start').addEventListener('click', () => complete ? resultScreen() : questionScreen());
-  document.querySelector('#restart')?.addEventListener('click', () => { answers = []; saveProgress(); questionScreen(); });
+function tick(){
+ if(!game||game.phase!=='active'||busy)return;
+ const remaining=Math.max(0,deadline-performance.now()),seconds=app.querySelector('#seconds');if(seconds)seconds.textContent=Math.ceil(remaining/1000);
+ app.querySelector('.clock')?.classList.toggle('urgent',remaining<=3000);if(remaining===0)answer(null);
 }
-function questionScreen() {
-  if (answers.length === rounds.length) return resultScreen();
-  const item = rounds[answers.length];
-  options = shuffle(item.options);
-  stageLabel.textContent = 'UNA PREGUNTA POR CADA GOL';
-  counter.textContent = `${answers.length + 1} / ${rounds.length}`;
-  screen.innerHTML = `<div class="progress" role="progressbar" aria-label="Preguntas respondidas" aria-valuemin="0" aria-valuemax="125" aria-valuenow="${answers.length}"><span style="width:${answers.length / rounds.length * 100}%"></span></div>
-    <div class="question-meta"><span class="category">${item.category}</span><span>${score()} aciertos</span></div>
-    <div class="difficulty"><span aria-label="Nivel ${item.difficulty} de 5">${'●'.repeat(item.difficulty)}<span class="difficulty-empty">${'○'.repeat(5 - item.difficulty)}</span></span><span>${difficultyLabels[item.difficulty - 1]}</span></div>
-    <h2 class="question-title" tabindex="-1">${item.question}</h2>
-    <div class="options">${options.map((option, i) => `<button class="option" data-option="${i}"><span class="option-letter" aria-hidden="true">${'ABCD'[i]}</span><span>${option}</span></button>`).join('')}</div>
-    <div id="feedback" aria-live="polite"></div>
-    <div id="next-slot"></div>`;
-  screen.querySelectorAll('.option').forEach(button => button.addEventListener('click', () => answerQuestion(Number(button.dataset.option), item)));
-  focusHeading();
+async function answer(choice){
+ if(busy||game?.phase!=='active')return;busy=true;stopTimer();const current=game;
+ app.querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;if(Number(b.dataset.choice)===choice)b.classList.add('chosen');});
+ const status=app.querySelector('#status');status.textContent=choice===null?'Se acabó el tiempo…':'Comprobando tu respuesta…';
+ const payload={gameToken:saved.gameToken,questionId:current.question.id,choice,value:choice===null?null:current.question.options[choice]};
+ const send=async()=>{try{
+  const data=await api('answer',payload);busy=false;if(data.phase==='done')return results(data);if(data.phase==='active')return showGame(data);game=data;
+  app.querySelector('.chosen')?.classList.add('correct');app.querySelector('#score').textContent=aciertos(data.score);status.textContent='¡Golazo! Respuesta correcta.';status.classList.add('success');
+  const button=app.querySelector('#next');button.disabled=false;button.onclick=next;button.focus({preventScroll:true});
+ }catch(error){busy=false;status.textContent=error.message;const button=app.querySelector('#next');button.textContent='Reconectar';button.disabled=false;button.onclick=()=>{if(busy)return;busy=true;button.disabled=true;send();};}};
+ await send();
 }
-function answerQuestion(index, item) {
-  if (answers.length >= rounds.length || rounds[answers.length].id !== item.id) return;
-  const selected = options[index];
-  const correct = selected === item.answer;
-  answers.push({ id: item.id, selected });
-  saveProgress();
-  screen.querySelectorAll('.option').forEach((button, i) => {
-    button.disabled = true;
-    if (options[i] === item.answer) {
-      button.classList.add('correct');
-      button.insertAdjacentHTML('beforeend', '<span class="option-tag">CORRECTA</span>');
-    } else if (i === index) {
-      button.classList.add('wrong');
-      button.insertAdjacentHTML('beforeend', '<span class="option-tag">TU ELECCIÓN</span>');
-    }
-  });
-  screen.querySelector('#feedback').innerHTML = `<div class="feedback ${correct ? '' : 'missed'}"><strong>${correct ? '¡Golazo! Respuesta correcta.' : 'Esta se fue afuera.'}</strong>${item.explanation}</div>`;
-  screen.querySelector('.question-meta').lastElementChild.textContent = `${score()} aciertos`;
-  const progress = screen.querySelector('.progress');
-  progress.setAttribute('aria-valuenow', answers.length);
-  progress.firstElementChild.style.width = `${answers.length / rounds.length * 100}%`;
-  screen.querySelector('#next-slot').innerHTML = `<button class="primary" id="next">${answers.length === rounds.length ? 'Ver mi resultado' : 'Siguiente pregunta'}</button>`;
-  screen.querySelector('#next').addEventListener('click', questionScreen);
-  screen.querySelector('#next').focus({ preventScroll: true });
+function readyScreen(data){game=data;screen('game',`<section class="game-wrap ready-wrap"><p class="eyebrow">EL DESAFÍO SIGUE</p><h2 tabindex="-1">¡GOLAZO!</h2>${portrait(saved.avatar)}<p>${data.score} aciertos. Una vida.</p><footer class="game-bottom"><p id="status" aria-live="polite">Concentrate para la próxima.</p><button class="primary" id="next">Siguiente pregunta</button></footer></section>`);app.querySelector('#next').onclick=next;}
+async function next(){
+ if(busy)return;busy=true;const button=app.querySelector('#next');button.disabled=true;button.textContent='Preparando pregunta…';
+ try{const data=await api('next',{gameToken:saved.gameToken});busy=false;showGame(data);focusTitle();}
+ catch(error){busy=false;app.querySelector('#status').textContent=error.message;button.disabled=false;button.textContent='Reconectar';button.onclick=restore;}
 }
-function resultScreen() {
-  const points = score();
-  stageLabel.textContent = 'FINAL DEL PARTIDO';
-  counter.textContent = '125 / 125';
-  const title = points >= 110 ? '¡Sabés como el 10!' : points >= 85 ? 'Alma de campeón.' : points >= 60 ? 'Llevás la camiseta.' : 'Siempre del lado de Leo.';
-  screen.innerHTML = `<p class="start-kicker">QUIZ COMPLETADO</p><h2 tabindex="-1">${title}</h2>
-    <div class="result-number">${points}<span> / 125</span></div><p class="result-label">RESPUESTAS CORRECTAS · ${Math.round(points / 125 * 100)}%</p>
-    <p class="start-copy">Recorriste 125 preguntas de Leo con Argentina. Estos son tus aciertos por tema:</p>
-    <div class="results-breakdown">${[...new Set(questions.map(q => q.category))].map(category => {
-      const count = answers.filter(a => questions[a.id - 1].category === category && questions[a.id - 1].answer === a.selected).length;
-      return `<div class="result-row"><span>${category}</span><b>${count} / 25</b></div>`;
-    }).join('')}</div><button class="primary" id="again">Volver a jugar</button>`;
-  screen.querySelector('#again').addEventListener('click', () => { answers = []; saveProgress(); questionScreen(); });
-  focusHeading();
+function rankingRows(data){return data.entries.length?data.entries.map((entry,i)=>`<li class="ranking-row ${entry.id===data.playerId?'you':''}"><b class="rank-position">${i+1}</b>${portrait(entry.avatar,'mini-avatar')}<span class="rank-name">${esc(entry.nickname)}${entry.id===data.playerId?' <small>VOS</small>':''}</span><strong>${entry.score}<small> ACIERTOS</small></strong></li>`).join(''):'<li class="empty-ranking">La cancha está vacía. ¡Sé el primero!</li>';}
+function results(data){
+ busy=false;game=data;
+ screen('result',`<section class="result-wrap"><p class="eyebrow">EL DESAFÍO DEL 10</p><h1 tabindex="-1">${data.reason==='complete'?'¡CAMPEÓN!':'FINAL DEL PARTIDO'}</h1>${portrait(data.avatar)}<h2 class="player-name">${esc(data.nickname)}</h2>
+ <p class="end-reason">${data.reason==='timeout'?'Se acabaron los 10 segundos.':data.reason==='wrong'?'Un error. Se terminó tu vida.':'125 respuestas. Una historia de campeón.'}</p><div class="result-score">${data.score}<span> / 125</span></div><p class="score-caption">ACIERTOS EN ESTA PARTIDA</p>
+ <div class="your-rank"><strong>#${data.rank} EN EL RANKING GLOBAL</strong><span>TU RÉCORD: ${aciertos(data.bestScore).toUpperCase()} · ${data.total} ${data.total===1?'JUGADOR':'JUGADORES'}</span></div>
+ <div class="ranking-heading"><h3>LOS 5 DEL 10</h3><span>RÉCORDS GLOBALES</span></div><ol class="ranking">${rankingRows(data)}</ol><p class="ranking-note">Tu posición corresponde a tu mejor partida. Empates: menor tiempo de respuesta.</p>
+ <button class="primary" id="again">Prepararme y volver a jugar</button><button class="link-button" id="share">Compartir mi resultado</button><p class="share-status" id="share-status" aria-live="polite"></p></section>`);
+ app.querySelector('#again').onclick=()=>{delete saved.gameToken;persist();setup();focusTitle();};
+ app.querySelector('#share').onclick=async()=>{
+  const text=`Hice ${data.score} aciertos en el quiz de Messi 🇦🇷. Mi récord está #${data.rank} en el ranking global. Una vida. 10 segundos por pregunta. ¿Me superás?`;
+  try{if(navigator.share)await navigator.share({title:'El desafío del 10',text,url:location.href});else{await navigator.clipboard.writeText(`${text}\n${location.href}`);app.querySelector('#share-status').textContent='Resultado copiado para compartir.';}}
+  catch(error){if(error.name!=='AbortError')app.querySelector('#share-status').textContent='No se pudo compartir. Copiá el enlace de esta página.';}
+ };focusTitle();
 }
-startScreen();
+async function showRanking(){
+ screen('ranking','<section class="ranking-wrap"><p role="status">Buscando los récords…</p></section>');
+ try{const data=await api('leaderboard');screen('ranking',`<section class="ranking-wrap"><p class="eyebrow">EL DESAFÍO DEL 10</p><h1 tabindex="-1">RANKING GLOBAL</h1><p class="ranking-note">Los mejores resultados de ${data.total} ${data.total===1?'jugador':'jugadores'}.</p><ol class="ranking">${rankingRows(data)}</ol><button class="primary" id="back">Volver y prepararme</button></section>`);app.querySelector('#back').onclick=setup;focusTitle();}
+ catch(error){errorScreen(error,showRanking);}
+}
+function errorScreen(error,retry){screen('error',`<section class="ranking-wrap"><h1 tabindex="-1">VOLVAMOS A CONECTAR</h1><p class="hook" role="alert">${esc(error.message)}</p><button class="primary" id="retry">Reconectar</button><button class="link-button" id="home">Ir al inicio</button></section>`);app.querySelector('#retry').onclick=retry;app.querySelector('#home').onclick=()=>{delete saved.gameToken;persist();setup();};}
+async function restore(){busy=false;screen('loading','<section class="ranking-wrap"><p role="status">Recuperando tu partida…</p></section>');try{showGame(await api('state',{gameToken:saved.gameToken}));}catch(error){errorScreen(error,restore);}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
+if(!location.pathname.endsWith('/layout-check.html')){if(saved.gameToken)restore();else setup();}
+export { showGame };
