@@ -1,5 +1,5 @@
 import { difficultyLabels, orderedQuestions } from './questions.js?v=20261006-2';
-import { tiers, tierForScore } from './tiers.js';
+import { tiers, tierForScore } from './tiers.js?v=20261006-3';
 import { createPracticeGame } from './practice-game.js?v=20261006-2';
 const API=['127.0.0.1','localhost'].includes(location.hostname)?'/api':'https://messi-quiz-albiceleste.guidoboetsch.chatgpt.site/api';
 const PRACTICE=location.pathname.endsWith('/prueba.html'), practice=createPracticeGame();

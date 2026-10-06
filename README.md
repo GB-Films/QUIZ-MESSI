@@ -12,10 +12,10 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 
 | Aciertos | Resultado |
 | --- | --- |
-| 0–5 | Messi en el banco · ALEMANIA 2006 |
-| 6–11 | Messi de los 43 segundos · EL DEBUT ANTE HUNGRÍA · 2005 |
-| 12–17 | Messirve · EL MEME DE LOS LENTES |
-| 18–23 | Messi debutante · PRIMER GOL MUNDIALISTA · 2006 |
+| 0–5 | Messi de los 43 segundos · EL DEBUT ANTE HUNGRÍA · 2005 |
+| 6–11 | Messi debutante · PRIMER GOL MUNDIALISTA · 2006 |
+| 12–17 | Messi en el banco · ALEMANIA 2006 |
+| 18–23 | Messirve · EL MEME DE LOS LENTES |
 | 24–29 | Messi olímpico · ORO EN BEIJING · 2008 |
 | 30–35 | Messi con el Diego · EL ABRAZO · MUNDIAL 2010 |
 | 36–41 | Messi del último minuto · EL ZURDAZO ANTE IRÁN · BRASIL 2014 |
@@ -29,13 +29,13 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 | 90–95 | Messi del desahogo · EL GOL ANTE MÉXICO · QATAR 2022 |
 | 96–100 | Messi Topo Gigio · EL FESTEJO ANTE PAÍSES BAJOS · QATAR 2022 |
 | 101–104 | Messi «andá pa’ allá, bobo» · LA ENTREVISTA CON GASTÓN EDUL · QATAR 2022 |
-| 105–110 | Messi de la remontada · GOL ANTE EGIPTO · MUNDIAL 2026 |
-| 111–114 | Messi de rodillas · EL FESTEJO ANTE INGLATERRA · MUNDIAL 2026 |
-| 115–123 | Messi campeón del mundo · QATAR 2022 |
+| 105–110 | Messi campeón del mundo · QATAR 2022 |
+| 111–114 | Messi de la remontada · GOL ANTE EGIPTO · MUNDIAL 2026 |
+| 115–123 | Messi de rodillas · EL FESTEJO ANTE INGLATERRA · MUNDIAL 2026 |
 | 124 | Messi de la última final · MEDALLA DE PLATA · MUNDIAL 2026 |
 | 125 | Messi 2012 · EL NIVEL DEFINITIVO |
 
-Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa exactamente la foto elegida y aportada por el usuario: Maradona abraza y besa a Messi, de espaldas con la camiseta 10. Su enlace abre esa imagen.
+Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. Siguen la propuesta cronológica aprobada: debut de 2005, debut con gol de 2006 y banco ante Alemania, luego los momentos hasta 2026. Messirve queda después de 2006 de forma provisoria, porque no está confirmada la fecha de la foto. Messi 2012 es la excepción final, exclusiva de 125 aciertos. Los intervalos de puntaje se conservan y se reasignan las fotos; los resultados anteriores y el ranking también muestran este orden según sus aciertos guardados. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa exactamente la foto elegida y aportada por el usuario: Maradona abraza y besa a Messi, de espaldas con la camiseta 10. Su enlace abre esa imagen.
 
 El ranking y las partidas se guardan en Cloud Firestore (Firebase), separado de GitHub Pages, en el proyecto `quiz-messi-8674d`. Al agotar las diez vidas o completar el quiz, la partida y el nuevo récord se guardan juntos antes de mostrar el resultado. También se registra un primer resultado de cero aciertos. Cualquier visitante puede abrir el ranking global sin jugar ni iniciar sesión y recorrer todos los récords en páginas ajustadas al alto de la pantalla; el resultado muestra el puesto personal y ofrece acceso al listado completo en otra pantalla. El ranking visible consulta los datos actuales al abrirlo, actualizarlo o volver a la pestaña; la primera página se refresca cada quince segundos mientras está visible. Las consultas de compatibilidad conservan una caché de quince segundos. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 

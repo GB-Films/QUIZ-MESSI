@@ -3,17 +3,6 @@ export const tiers = [
  {
   "min": 0,
   "max": 5,
-  "name": "Messi en el banco",
-  "era": "ALEMANIA 2006",
-  "image": "01-banco-2006.webp",
-  "position": "50% 45%",
-  "alt": "Messi sentado con los brazos cruzados en el banco de Argentina en 2006",
-  "copy": "Te quedaste mirando desde afuera. Leo todavía no entró.",
-  "source": "https://www.tycsports.com/al-angulo/lionel-messi-y-el-recuerdo-del-mundial-de-alemania-2006-estaba-caliente-porque-queria-entrar-id520436.html"
- },
- {
-  "min": 6,
-  "max": 11,
   "name": "Messi de los 43 segundos",
   "era": "EL DEBUT ANTE HUNGRÍA · 2005",
   "image": "18-hungria-2005.jpg",
@@ -23,19 +12,8 @@ export const tiers = [
   "source": "https://espndeportes.espn.com/futbol/mundial/nota/_/id/15544664/vilmos-vanczak-lionel-messi-expulsion-argentina-vs-hungria-2005"
  },
  {
-  "min": 12,
-  "max": 17,
-  "name": "Messirve",
-  "era": "EL MEME DE LOS LENTES",
-  "image": "17-messirve.jpg",
-  "position": "40% 35%",
-  "alt": "Messi joven con lentes de sol en la imagen del meme Messirve",
-  "copy": "Ya sumaste algo de fútbol. Este resultado… messirve.",
-  "source": "https://www.plantillasdememes.com/plantilla/messirve"
- },
- {
-  "min": 18,
-  "max": 23,
+  "min": 6,
+  "max": 11,
   "name": "Messi debutante",
   "era": "PRIMER GOL MUNDIALISTA · 2006",
   "image": "02-debut-2006.jpg",
@@ -43,6 +21,28 @@ export const tiers = [
   "alt": "Messi celebra su primer gol mundialista contra Serbia y Montenegro",
   "copy": "Entraste y dejaste tu primera marca. Esto recién empieza.",
   "source": "https://tntsports.com.ar/seleccion/El-debut-con-gol-incluido-de-Messi-en-los-Mundiales-20200616-0007.html"
+ },
+ {
+  "min": 12,
+  "max": 17,
+  "name": "Messi en el banco",
+  "era": "ALEMANIA 2006",
+  "image": "01-banco-2006.webp",
+  "position": "50% 45%",
+  "alt": "Messi sentado con los brazos cruzados en el banco de Argentina en 2006",
+  "copy": "Te quedaste mirando desde afuera. Leo todavía no entró.",
+  "source": "https://www.tycsports.com/al-angulo/lionel-messi-y-el-recuerdo-del-mundial-de-alemania-2006-estaba-caliente-porque-queria-entrar-id520436.html"
+ },
+ {
+  "min": 18,
+  "max": 23,
+  "name": "Messirve",
+  "era": "EL MEME DE LOS LENTES",
+  "image": "17-messirve.jpg",
+  "position": "40% 35%",
+  "alt": "Messi joven con lentes de sol en la imagen del meme Messirve",
+  "copy": "Ya sumaste algo de fútbol. Este resultado… messirve.",
+  "source": "https://www.plantillasdememes.com/plantilla/messirve"
  },
  {
   "min": 24,
@@ -190,6 +190,17 @@ export const tiers = [
  {
   "min": 105,
   "max": 110,
+  "name": "Messi campeón del mundo",
+  "era": "QATAR 2022",
+  "image": "09-mundial-2022.jpg",
+  "position": "50% 45%",
+  "alt": "Messi besa la Copa del Mundo tras ganar Qatar 2022",
+  "copy": "Llegaste a la cima del fútbol. El último secreto está cada vez más cerca.",
+  "source": "https://www.beinsports.com/en-us/soccer/articles-video/messi-and-the-two-records-he-aims-to-break-at-the-2026-world-cup-2024-10-17"
+ },
+ {
+  "min": 111,
+  "max": 114,
   "name": "Messi de la remontada",
   "era": "GOL ANTE EGIPTO · MUNDIAL 2026",
   "image": "08-egipto-2026-elegida.png",
@@ -199,8 +210,8 @@ export const tiers = [
   "source": "https://tn.com.ar/deportes/mundial/2026/2026/07/08/fue-a-una-farmacia-mientras-argentina-perdia-con-egipto-llego-el-empate-y-los-empleados-le-hicieron-un-inesperado-pedido/"
  },
  {
-  "min": 111,
-  "max": 114,
+  "min": 115,
+  "max": 123,
   "name": "Messi de rodillas",
   "era": "EL FESTEJO ANTE INGLATERRA · MUNDIAL 2026",
   "image": "16-desahogo-2026.png",
@@ -208,17 +219,6 @@ export const tiers = [
   "alt": "Messi de espaldas y de rodillas, con la camiseta oscura de Argentina, tras la semifinal con Inglaterra en 2026",
   "copy": "Apretaste los puños y soltaste todo. Estás a un paso de levantar la Copa.",
   "source": "https://www.todojujuy.com/deportes/lionel-messi-y-la-victoria-inglaterra-no-es-una-victoria-mas-n293182"
- },
- {
-  "min": 115,
-  "max": 123,
-  "name": "Messi campeón del mundo",
-  "era": "QATAR 2022",
-  "image": "09-mundial-2022.jpg",
-  "position": "50% 45%",
-  "alt": "Messi besa la Copa del Mundo tras ganar Qatar 2022",
-  "copy": "Llegaste a la cima del fútbol. El último secreto está cada vez más cerca.",
-  "source": "https://www.beinsports.com/en-us/soccer/articles-video/messi-and-the-two-records-he-aims-to-break-at-the-2026-world-cup-2024-10-17"
  },
  {
   "min": 124,

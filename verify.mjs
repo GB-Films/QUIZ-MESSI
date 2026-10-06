@@ -31,14 +31,18 @@ for (let score=0;score<=125;score++) {
  assert.equal(tiers.filter(t => score>=t.min && score<=t.max).length,1,`Un solo nivel para ${score} aciertos`);
  assert.ok(tierForScore(score));
 }
-assert.equal(tierForScore(0).name,'Messi en el banco');
-assert.equal(tierForScore(111).name,'Messi de rodillas');
-assert.equal(tierForScore(115).name,'Messi campeón del mundo');
+assert.equal(tierForScore(0).name,'Messi de los 43 segundos');
+assert.equal(tierForScore(6).name,'Messi debutante');
+assert.equal(tierForScore(12).name,'Messi en el banco');
+assert.equal(tierForScore(18).name,'Messirve');
+assert.equal(tierForScore(111).name,'Messi de la remontada');
+assert.equal(tierForScore(115).name,'Messi de rodillas');
 assert.equal(tierForScore(89).name,'Messi de Wembley');
 assert.equal(tierForScore(104).name,'Messi «andá pa’ allá, bobo»');
-assert.equal(tierForScore(105).name,'Messi de la remontada');
-assert.equal(tierForScore(110).name,'Messi de la remontada');
-assert.equal(tierForScore(123).name,'Messi campeón del mundo');
+assert.equal(tierForScore(105).name,'Messi campeón del mundo');
+assert.equal(tierForScore(110).name,'Messi campeón del mundo');
+assert.equal(tierForScore(114).name,'Messi de la remontada');
+assert.equal(tierForScore(123).name,'Messi de rodillas');
 assert.equal(tierForScore(124).name,'Messi de la última final');
 assert.equal(tierForScore(124).min,124);
 assert.equal(tierForScore(124).max,124);
