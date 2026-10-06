@@ -22,6 +22,9 @@ assert.equal(new Set(questions.map(q => q.category)).size, 5);
 const html = await readFile('./dist/index.html', 'utf8');
 for (const asset of ['style.css', 'app.js', 'questions.js', 'favicon.svg']) await readFile(`./dist/${asset}`);
 assert.ok(html.includes('lang="es-AR"'));
+assert.ok(html.includes('property="og:image" content="https://gb-films.github.io/QUIZ-MESSI/assets/levels/09-mundial-2022.jpg'));
+assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));
+await readFile('./dist/prueba.html');
 assert.equal(tiers.length, 22);
 assert.equal(new Set(tiers.map(t => t.image)).size, 22);
 for (let score=0;score<=125;score++) {

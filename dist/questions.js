@@ -24,100 +24,100 @@ export const questions = [
   {
     "id": 67,
     "category": "La Albiceleste",
-    "difficulty": 1,
-    "question": "¿Qué apodo recibe la Selección Argentina por sus colores?",
+    "difficulty": 3,
+    "question": "¿Contra qué selección jugó Messi su partido número 200 con Argentina?",
     "options": [
-      "La Albiceleste",
-      "La Azzurra",
-      "La Canarinha",
-      "La Roja"
+      "Argelia",
+      "Austria",
+      "Jordania",
+      "Egipto"
     ],
-    "answer": "La Albiceleste",
-    "explanation": "El nombre remite al blanco y al celeste de su camiseta."
+    "answer": "Argelia",
+    "explanation": "Messi llegó a los 200 partidos con la Selección mayor ante Argelia, en el debut de Argentina en el Mundial 2026, el 16 de junio."
   },
   {
     "id": 55,
     "category": "La Albiceleste",
-    "difficulty": 1,
-    "question": "¿Qué número de camiseta identifica a Messi en la Selección desde 2009?",
+    "difficulty": 3,
+    "question": "¿Cuántos números de camiseta diferentes usó Messi con la Selección mayor?",
     "options": [
-      "19",
-      "10",
-      "18",
-      "7"
+      "2",
+      "3",
+      "4",
+      "5"
     ],
-    "answer": "10",
-    "explanation": "El 10 es su número emblemático con Argentina."
+    "answer": "3",
+    "explanation": "Con la Selección mayor usó los dorsales 18, 19 y 10: tres números diferentes. No se cuentan la Sub-20 ni la selección olímpica, donde también llevó otros números."
   },
   {
     "id": 88,
-    "category": "Los Mundiales",
-    "difficulty": 1,
-    "question": "¿Quién dirigió a Messi en el Mundial de Qatar 2022?",
+    "category": "Títulos y momentos",
+    "difficulty": 2,
+    "question": "¿En qué año Messi y todo el plantel argentino anunciaron que no hablarían más con la prensa?",
     "options": [
-      "Gerardo Martino",
-      "Lionel Scaloni",
-      "Jorge Sampaoli",
-      "Alejandro Sabella"
+      "2014",
+      "2015",
+      "2016",
+      "2018"
     ],
-    "answer": "Lionel Scaloni",
-    "explanation": "Scaloni condujo al equipo campeón del mundo."
+    "answer": "2016",
+    "explanation": "Fue el 15 de noviembre de 2016, después del 3-0 ante Colombia en San Juan. Messi anunció la decisión acompañado por sus compañeros, tras las acusaciones contra Ezequiel Lavezzi."
   },
   {
     "id": 96,
-    "category": "Los Mundiales",
-    "difficulty": 1,
-    "question": "¿Contra qué selección ganó Messi la final de Qatar 2022?",
+    "category": "Qatar en detalle",
+    "difficulty": 2,
+    "question": "¿A qué jugador le dijo Messi «andá para allá, bobo» después del partido ante Países Bajos en Qatar 2022?",
     "options": [
-      "España",
-      "Inglaterra",
-      "Alemania",
-      "Francia"
+      "Wout Weghorst",
+      "Denzel Dumfries",
+      "Virgil van Dijk",
+      "Memphis Depay"
     ],
-    "answer": "Francia",
-    "explanation": "Argentina venció a Francia en una final inolvidable."
+    "answer": "Wout Weghorst",
+    "explanation": "La frase estaba dirigida al delantero neerlandés Wout Weghorst, durante la entrevista con Gastón Edul después de los cuartos de final de Qatar 2022."
   },
   {
     "id": 100,
-    "category": "Los Mundiales",
-    "difficulty": 1,
-    "question": "¿En qué estadio levantó Messi la Copa del Mundo de 2022?",
+    "category": "La Albiceleste",
+    "difficulty": 3,
+    "question": "¿Contra qué selección hizo Messi su primer gol de tiro libre con Argentina?",
     "options": [
-      "Wembley",
-      "Lusail",
-      "Al Bayt",
-      "Maracaná"
+      "Uruguay",
+      "Paraguay",
+      "Chile",
+      "Colombia"
     ],
-    "answer": "Lusail",
-    "explanation": "La final se jugó en el Estadio de Lusail."
+    "answer": "Paraguay",
+    "explanation": "Fue ante Paraguay, el 7 de septiembre de 2012, en el estadio Mario Alberto Kempes de Córdoba. Messi marcó de tiro libre en el triunfo argentino por 3-1 por las Eliminatorias para Brasil 2014."
   },
   {
     "id": 113,
-    "category": "Títulos y momentos",
-    "difficulty": 1,
-    "question": "¿En qué año ganó Messi su primera Copa América con la mayor?",
+    "category": "La Albiceleste",
+    "difficulty": 3,
+    "question": "¿A qué selección le hizo Messi el gol de tiro libre por abajo de la barrera en octubre de 2012?",
     "options": [
-      "2021",
-      "2016",
-      "2015",
-      "2019"
+      "Paraguay",
+      "Ecuador",
+      "Uruguay",
+      "Bolivia"
     ],
-    "answer": "2021",
-    "explanation": "El primer título de Copa América de Leo llegó en 2021."
+    "answer": "Uruguay",
+    "explanation": "Messi sorprendió a Uruguay con un remate rasante por debajo de la barrera, el 12 de octubre de 2012 en Mendoza. Fue el tercer gol del 3-0 argentino por las Eliminatorias para Brasil 2014."
   },
   {
     "id": 114,
-    "category": "Títulos y momentos",
-    "difficulty": 1,
-    "question": "¿A qué selección venció Argentina en la final de la Copa América 2021?",
+    "category": "La Albiceleste",
+    "difficulty": 4,
+    "question": "Según el balance de la AFA de octubre de 2026, ¿cuántas asistencias acumuló Messi con la Selección mayor?",
     "options": [
-      "Colombia",
-      "Uruguay",
-      "Chile",
-      "Brasil"
+      "61",
+      "65",
+      "66",
+      "68"
     ],
-    "answer": "Brasil",
-    "explanation": "Argentina venció 1-0 a Brasil."
+    "answer": "66",
+    "explanation": "El balance publicado por la AFA el 5 de octubre de 2026 registra 66 asistencias en 207 partidos con la Selección mayor. Esta pregunta usa esa fuente y esa fecha, porque otras estadísticas pueden contar las asistencias de manera diferente."
   },
   {
     "id": 115,
@@ -233,17 +233,17 @@ export const questions = [
   },
   {
     "id": 45,
-    "category": "Qatar en detalle",
-    "difficulty": 1,
-    "question": "¿Qué arquero argentino acompañó a Messi como titular durante Qatar 2022?",
+    "category": "Títulos y momentos",
+    "difficulty": 2,
+    "question": "¿Qué día nació Lionel Messi?",
     "options": [
-      "Emiliano Martínez",
-      "Gerónimo Rulli",
-      "Franco Armani",
-      "Sergio Romero"
+      "24 de junio de 1987",
+      "24 de julio de 1987",
+      "21 de junio de 1987",
+      "24 de junio de 1986"
     ],
-    "answer": "Emiliano Martínez",
-    "explanation": "Dibu Martínez defendió el arco durante los siete partidos."
+    "answer": "24 de junio de 1987",
+    "explanation": "Lionel Andrés Messi nació en Rosario, Santa Fe, el 24 de junio de 1987."
   },
   {
     "id": 73,
@@ -435,7 +435,7 @@ export const questions = [
     "options": [
       "Todavía queda una final por jugar.",
       "Es increíble pero no se me da.",
-      "Hoy ganamos la Copa América.",
+      "No te largués, estamos viendo el partido.",
       "Nunca perdimos una final."
     ],
     "answer": "Es increíble pero no se me da.",
@@ -669,15 +669,15 @@ export const questions = [
     "id": 49,
     "category": "Qatar en detalle",
     "difficulty": 2,
-    "question": "¿Cuántos goles hizo Julián Álvarez junto a Messi en la semifinal ante Croacia?",
+    "question": "¿Qué árbitro cobró el penal que Messi convirtió ante Croacia en la semifinal de Qatar 2022?",
     "options": [
-      "1",
-      "3",
-      "2",
-      "0"
+      "Mateu Lahoz",
+      "Szymon Marciniak",
+      "Daniele Orsato",
+      "Michael Oliver"
     ],
-    "answer": "2",
-    "explanation": "Julián marcó dos goles y Messi uno en el 3-0."
+    "answer": "Daniele Orsato",
+    "explanation": "El italiano Daniele Orsato dirigió la semifinal del 13 de diciembre de 2022. Cobró el penal que Messi convirtió para abrir el 3-0 de Argentina ante Croacia."
   },
   {
     "id": 99,

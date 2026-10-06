@@ -25,6 +25,8 @@ export const games = sqliteTable('quiz_games', {
   rulesVersion: integer('rules_version').notNull().default(1),
   lastCorrect: integer('last_correct').notNull().default(0),
   lastReason: text('last_reason'),
+  lastValue: text('last_value'),
+  bankVersion: text('bank_version'),
   phase: text('phase').notNull(),
   issuedAt: integer('issued_at').notNull(),
   deadline: integer('deadline').notNull(),

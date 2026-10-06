@@ -95,6 +95,7 @@ try {
   sqlite = new DatabaseSync(':memory:');
   sqlite.exec(await readFile('drizzle/0000_misty_marvel_apes.sql','utf8'));
 sqlite.exec(await readFile('drizzle/0001_ten_lives.sql','utf8'));
+sqlite.exec(await readFile('drizzle/0002_accepted_answer.sql','utf8'));
   env.DB = {prepare(sql){return {bind(...values){const statement=sqlite.prepare(sql);return {async first(){return statement.get(...values)||null;},async all(){return {results:statement.all(...values)};},async run(){return {meta:{changes:statement.run(...values).changes}};}};}};}};
   async function post(action,body){const response=await worker.fetch(new Request(`https://quiz.test/api/${action}`,{method:'POST',headers:{'Content-Type':'application/json','Origin':'https://gb-films.github.io'},body:JSON.stringify(body)}),env);return {status:response.status,...await response.json()};}
   const game = await post('start',{nickname:'Nube',avatar:3});
@@ -172,6 +173,16 @@ sqlite.exec(await readFile('drizzle/0001_ten_lives.sql','utf8'));
     const cachedEnv = {...env,FIREBASE_CACHE_MS:'15000'};
     await Promise.all(Array.from({length:100},()=>createFirebaseRanking(cachedEnv,VERSION).leaderboard()));
     assert.equal(queryCalls,callsBefore+1,'100 simultaneous leaderboard reads share one query in the server instance');
+    const cachedRanking=createFirebaseRanking(cachedEnv,VERSION),cachedBoard=await cachedRanking.leaderboard();
+    const oldPage=await cachedRanking.leaderboard({limit:5,after:null,offset:0});
+    await cachedRanking.saveBest(player('fresh-check',125,1,now));
+    assert.equal((await cachedRanking.leaderboard()).total,cachedBoard.total,'Compatibility cache can still hold the old snapshot');
+    const freshResponse=await worker.fetch(new Request('https://quiz.test/api/leaderboard?limit=5&fresh=1'),{...cloudEnv,FIREBASE_CACHE_MS:'15000'});
+    const freshPage=await freshResponse.json();
+    assert.equal(freshPage.total,oldPage.total+1,'Refresh bypasses both the page cache and the total cache');
+    assert.equal(freshPage.entries[0].id,'fresh-check');
+    assert.equal(freshResponse.headers.get('Cache-Control'),'no-store');
+    console.log('Ranking actualizado verificado: un récord nuevo aparece al refrescar sin esperar los quince segundos de caché.');
     console.log('Partidas en Firebase verificadas sin D1: guardado atómico, inicios y respuestas simultáneas sin duplicados, reloj y resultado visible ante cortes del ranking.');
     console.log('Carga simulada verificada: 100 jugadores concurrentes sin pérdidas y 100 consultas de ranking agrupadas en una consulta por instancia. No constituye una prueba de capacidad de la nube.');
     console.log('Ranking público completo verificado: todos los jugadores eliminados, incluidos cero aciertos, accesibles por páginas sin duplicados ni campos privados.');

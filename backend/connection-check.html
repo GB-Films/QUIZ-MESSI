@@ -1,0 +1,13 @@
+<!doctype html><html lang="es-AR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><title>Verificación local de reconexión</title></head><body><main id="app"></main><script>
+// Local preview only. Lose replies AFTER the memory API commits the answer.
+const originalFetch=window.fetch.bind(window),sent=[];
+window.fetch=async(input,options)=>{
+ if(!String(input).endsWith('/api/answer'))return originalFetch(input,options);
+ sent.push(options.body);const response=await originalFetch(input,options);
+ if(sent.length===1)return Response.json({error:'Respuesta perdida después de guardarse'},{status:503});
+ if(sent.length===2)throw new TypeError('Conexión interrumpida');
+ const result=await response.clone().json();
+ document.title=sent.every(body=>body===sent[0])&&result.score===0&&result.lives===9&&!result.correct?'Reconexión verificada: una sola vida, misma elección':'FALLO DE RECONEXIÓN';
+ return response;
+};
+</script><script type="module" src="/app.js"></script></body></html>

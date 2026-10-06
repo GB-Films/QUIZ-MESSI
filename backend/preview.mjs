@@ -6,6 +6,7 @@ import worker from './index.js';
 const sqlite=new DatabaseSync(':memory:');
 sqlite.exec(await readFile('drizzle/0000_misty_marvel_apes.sql','utf8'));
 sqlite.exec(await readFile('drizzle/0001_ten_lives.sql','utf8'));
+sqlite.exec(await readFile('drizzle/0002_accepted_answer.sql','utf8'));
 const DB={prepare(sql){return {bind(...values){const st=sqlite.prepare(sql);return {async first(){return st.get(...values)||null;},async all(){return {results:st.all(...values)};},async run(){return {meta:{changes:st.run(...values).changes}};}};}};}};
 const root=resolve('dist');
 http.createServer(async(req,res)=>{
@@ -32,6 +33,7 @@ document.querySelector('#status').textContent=failures.length?'ERRORES: '+JSON.s
    for(let i=0;i<37;i++)sqlite.prepare('INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,score,elapsed_ms,updated_at) VALUES (?,?,?,?,?,?,?,?)').run('screen-check-'+i,'screen-check-'+String(i).padStart(2,'0'),'Prueba de pantalla '+i,3,'argentina-survival-1',Math.max(0,125-i*4),500,1900000000000+i);
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await readFile('backend/screen-check.html'));return;
   }
+  if(url.pathname==='/connection-check.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await readFile('backend/connection-check.html'));return;}
   if(url.pathname==='/results-check.html'){
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
    res.end(`<!doctype html><html lang="es-AR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><main id="app"></main><script type="module">

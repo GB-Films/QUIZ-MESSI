@@ -88,23 +88,23 @@ export function createFirebaseRanking(env, version) {
   const publicEntry = entry => ({id: entry.id, nickname: entry.nickname, avatar: entry.avatar, score: entry.score, elapsedMs: entry.elapsedMs});
   // One indexed string expresses the complete tie-break order, avoiding composite indexes.
   const orderKey = entry => `${String(125 - entry.score).padStart(3, '0')}:${String(entry.elapsedMs).padStart(7, '0')}:${String(entry.updatedAt).padStart(13, '0')}:${entry.id}`;
-  async function count(where) {
-    return cachedRead(`${parent}:count:${JSON.stringify(where||null)}`,ttl,async()=>{
+  async function count(where,fresh=false) {
+    return cachedRead(`${parent}:count:${JSON.stringify(where||null)}`,fresh?0:ttl,async()=>{
       const rows = await request(`${parent}:runAggregationQuery`, {structuredAggregationQuery: {structuredQuery: query(where ? {where} : {}), aggregations: [{alias: 'total', count: {}}]}});
       return Number(rows[0]?.result?.aggregateFields?.total?.integerValue || 0);
     });
   }
   return {
-    async leaderboard(page=null) {
-      if (page) return cachedRead(`${parent}:page:${page.limit}:${page.after}:${page.offset}`,ttl,async()=>{
+    async leaderboard(page=null,fresh=false) {
+      if (page) return cachedRead(`${parent}:page:${page.limit}:${page.after}:${page.offset}`,fresh?0:ttl,async()=>{
         const [rows,total]=await Promise.all([
-          request(`${parent}:runQuery`,{structuredQuery:query({orderBy:[{field:{fieldPath:'orderKey'},direction:'ASCENDING'}],limit:page.limit+1,...(page.after?{startAt:{values:[{stringValue:page.after}],before:false}}:{})})}),count()
+          request(`${parent}:runQuery`,{structuredQuery:query({orderBy:[{field:{fieldPath:'orderKey'},direction:'ASCENDING'}],limit:page.limit+1,...(page.after?{startAt:{values:[{stringValue:page.after}],before:false}}:{})})}),count(undefined,fresh)
         ]);
         return rankingPageResult(rows.filter(row=>row.document).map(row=>unpack(row.document)),total,page);
       });
-      return cachedRead(`${parent}:leaderboard`,ttl,async()=>{
+      return cachedRead(`${parent}:leaderboard`,fresh?0:ttl,async()=>{
         const [rows, total] = await Promise.all([
-          request(`${parent}:runQuery`, {structuredQuery: query({orderBy: [{field: {fieldPath: 'orderKey'}, direction: 'ASCENDING'}], limit: 5})}), count()
+          request(`${parent}:runQuery`, {structuredQuery: query({orderBy: [{field: {fieldPath: 'orderKey'}, direction: 'ASCENDING'}], limit: 5})}), count(undefined,fresh)
         ]);
         return {entries: rows.filter(row => row.document).map(row => publicEntry(unpack(row.document))), total};
       });

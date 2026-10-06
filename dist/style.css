@@ -99,3 +99,4 @@ body{min-width:0}.ball{flex:0 0 20px;width:20px;text-align:center;font-size:17px
 .answer-explanation{position:relative;color:var(--blue);font-size:13px;line-height:1.35}.answer-explanation summary{cursor:pointer;width:fit-content;padding:3px 0;text-decoration:underline}
 .game-bottom .answer-explanation p{position:absolute;z-index:2;bottom:calc(100% + 8px);left:0;width:100%;max-height:min(220px,38dvh);overflow-y:auto;background:#102b3d;border:1px solid #466173;border-radius:9px;padding:12px;color:var(--white);font-size:14px;line-height:1.5;box-shadow:0 4px 20px #0008}
 @media(max-height:550px){.clock.paused b{font-size:20px}.answer-explanation{font-size:12px}.answered .options{gap:5px}.answered .option{min-height:36px;padding:5px 9px}}
+.practice-switch{font:inherit;color:var(--gold);border:0;padding:0;background:none;text-decoration:underline;cursor:pointer}body[data-screen=setup] #practice-form{margin-top:26px}#practice-preview{font-size:16px}

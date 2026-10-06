@@ -7,6 +7,7 @@ await mkdir('dist/.openai',{recursive:true});
 await writeFile('dist/server/index.js',bundle);
 await cp('backend/firestore.js','dist/server/firestore.js');
 await cp('backend/ranking-page.js','dist/server/ranking-page.js');
+await cp('backend/legacy-questions.js','dist/server/legacy-questions.js');
 const rules=await readFile('backend/quiz-rules.js','utf8');
 await writeFile('dist/server/quiz-rules.js',rules.replace("import { orderedQuestions } from '../dist/questions.js';",`const orderedQuestions = ${JSON.stringify(orderedQuestions)};`));
 const games=await readFile('backend/firebase-games.js','utf8');

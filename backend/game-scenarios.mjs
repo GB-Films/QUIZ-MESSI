@@ -12,6 +12,9 @@ export async function gameScenarios(post,advance) {
   const first={gameToken:game.gameToken,questionId:game.question.id,choice:0,value:orderedQuestions[0].answer,score:125,lives:999};
   const goals=await Promise.all(Array.from({length:12},()=>post('answer',first)));
   assert.ok(goals.every(g=>g.status===200&&g.score===1&&g.lives===10&&g.correct));
+  const stale=await post('answer',{...first,value:first.value===game.question.options[0]?game.question.options[1]:game.question.options[0]});
+  assert.equal(stale.acceptedValue,first.value,'A different tap cannot replace the first committed choice');
+  assert.equal(stale.questionId,first.questionId);
   advance(120000);
   const paused=await post('state',{gameToken:game.gameToken});
   assert.equal(paused.phase,'ready');assert.equal(paused.score,1);assert.equal(paused.lives,10);assert.equal(paused.answered,1);
@@ -21,6 +24,7 @@ export async function gameScenarios(post,advance) {
   const bad={gameToken:game.gameToken,questionId:second.question.id,choice:0,value:second.question.options.find(v=>v!==orderedQuestions[1].answer)};
   const errors=await Promise.all(Array.from({length:12},()=>post('answer',bad)));
   assert.ok(errors.every(g=>g.status===200&&g.score===1&&g.lives===9&&!g.correct&&g.answer===orderedQuestions[1].answer));
+  assert.equal(errors[0].acceptedValue,bad.value);
   advance(120000);
   assert.equal((await post('state',{gameToken:game.gameToken})).phase,'ready');
   assert.equal((await post('state',{gameToken:game.gameToken})).lives,9);
@@ -33,7 +37,7 @@ export async function gameScenarios(post,advance) {
     const expected=orderedQuestions[q.number-1];advance(100);
     const r=await post('answer',{gameToken:game.gameToken,questionId:q.question.id,choice:0,value:q.question.options.find(v=>v!==expected.answer)});
     assert.equal(r.lives,7-i);assert.equal(r.score,1);assert.equal(r.phase,i===7?'done':'ready');
-    if(i===7){assert.equal(r.reason,'lives');assert.equal(r.answer,expected.answer);assert.ok(r.explanation);assert.ok(r.bestScore>=1);}
+    if(i===7){assert.equal(r.reason,'lives');assert.equal(r.answer,expected.answer);assert.ok(r.explanation);assert.ok(r.resultSaved||r.bestScore>=1);}
   }
   const blocked=await post('start',{...identity,nickname:'No reinicia',requestId:crypto.randomUUID()});assert.equal(blocked.phase,'done');assert.equal(blocked.lives,0);assert.equal(blocked.gameToken,game.gameToken);
   assert.equal((await post('next',{gameToken:game.gameToken})).lives,0);
@@ -54,5 +58,11 @@ export async function gameScenarios(post,advance) {
     assert.equal(final.phase,'done');assert.equal(final.reason,'complete');assert.equal(final.score,choice===0?124:125);assert.equal(final.lives,choice===0?9:10);assert.equal(final.final,true);
     assert.equal((await post('start',{nickname:'Final '+choice,avatar:3,playerToken})).phase,'done');
   }
-  console.log('Diez vidas verificadas: errores y tiempos simultáneos, reintentos, progreso persistente, bloqueo definitivo y cuatro respuestas finales correctas.');
+  const delivery=await post('start',{nickname:'Envío demorado',avatar:3,playerToken:crypto.randomUUID()});advance(10900);
+  const delivered=await post('answer',{gameToken:delivery.gameToken,questionId:delivery.question.id,choice:0,value:orderedQuestions[0].answer,elapsedMs:9900});
+  assert.equal(delivered.correct,true);assert.equal(delivered.lives,10);assert.equal(delivered.score,1);
+  const tooLate=await post('next',{gameToken:delivery.gameToken});advance(12001);
+  const expired=await post('answer',{gameToken:delivery.gameToken,questionId:tooLate.question.id,choice:0,value:orderedQuestions[1].answer,elapsedMs:9900});
+  assert.equal(expired.lastReason,'timeout');assert.equal(expired.score,1);assert.equal(expired.lives,9);
+  console.log('Diez vidas verificadas: errores y tiempos simultáneos, reintentos, progreso persistente, bloqueo definitivo, entrega demorada acotada y cuatro respuestas finales correctas.');
 }

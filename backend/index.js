@@ -2,13 +2,13 @@ import { orderedQuestions } from '../dist/questions.js';
 import { firebaseEnabled, createFirebaseRanking } from './firestore.js';
 import { createFirebaseGames } from './firebase-games.js';
 import { parseRankingPage, rankingPageResult } from './ranking-page.js';
-import { VERSION, TIME, RULES_VERSION, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
+import { VERSION, TIME, RULES_VERSION, gameQuestions, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
 
 export { VERSION } from './quiz-rules.js';
 const ORIGINS = new Set(['https://gb-films.github.io','http://127.0.0.1:4173','http://localhost:4173']);
 const query = (db, sql, values = []) => db.prepare(sql).bind(...values);
-async function leaderboard(db, firebase, page=null) {
-  if (firebase) return firebase.leaderboard(page);
+async function leaderboard(db, firebase, page=null,fresh=false) {
+  if (firebase) return firebase.leaderboard(page,fresh);
   if(page){
     const values=[VERSION];let after='';
     if(page.after){const [inverseScore,elapsed,updated,id]=page.after.split(':');after=' AND (125-score,elapsed_ms,updated_at,public_id) > (?,?,?,?)';values.push(Number(inverseScore),Number(elapsed),Number(updated),id);}
@@ -52,7 +52,7 @@ async function start(db, body, request, now, firebase) {
     if(rate.n>=40)fail('Llegaste al límite de partidas por hora. Volvé más tarde.',429);
     await query(db,'INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,updated_at) VALUES (?,?,?,?,?,?)',[hash,crypto.randomUUID(),nickname,body.avatar,VERSION,now]).run();
     game=newGame(id,hash,nickname,body.avatar,now);
-    await query(db,'INSERT OR IGNORE INTO quiz_games (id,player_hash,nickname,avatar,phase,issued_at,deadline,version,ip_bucket,created_at,lives,rules_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[id,hash,nickname,body.avatar,'active',now,now+TIME,VERSION,ip,now,game.lives,RULES_VERSION]).run();
+    await query(db,'INSERT OR IGNORE INTO quiz_games (id,player_hash,nickname,avatar,phase,issued_at,deadline,version,ip_bucket,created_at,lives,rules_version,bank_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',[id,hash,nickname,body.avatar,'active',now,now+TIME,VERSION,ip,now,game.lives,RULES_VERSION,game.bank_version]).run();
   }
   return {gameToken:id,playerToken:token,...await gameAction(db,'state',{gameToken:id},now,firebase)};
 }
@@ -70,15 +70,15 @@ async function gameAction(db,action,body,now,firebase){
   if(action==='state'){
     if(game.phase==='ready')return readyGame(game);
     if(!expired(game,now))return publicGame(game,now);
-    body={...body,questionId:orderedQuestions[game.cursor].id,choice:null};
+    body={...body,questionId:gameQuestions(game)[game.cursor].id,choice:null};
   }else if(action!=='answer')fail('Operación no encontrada.',404);
   if(game.phase==='ready'){
-    if(orderedQuestions[game.cursor-1]?.id===body.questionId)return readyGame(game);
+    if(gameQuestions(game)[game.cursor-1]?.id===body.questionId)return readyGame(game);
     fail('La pregunta cambió.',409);
   }
   const previousCursor=game.cursor;
   if(!applyAnswer(game,body,now))return publicGame(game,now);
-  await query(db,"UPDATE quiz_games SET score=?,cursor=?,phase=?,reason=?,finished_at=?,elapsed_ms=?,lives=?,last_correct=?,last_reason=? WHERE id=? AND phase='active' AND cursor=? AND deadline=?",[game.score,game.cursor,game.phase,game.reason,game.finished_at,game.elapsed_ms,game.lives,game.last_correct,game.last_reason,game.id,previousCursor,game.deadline]).run();
+  await query(db,"UPDATE quiz_games SET score=?,cursor=?,phase=?,reason=?,finished_at=?,elapsed_ms=?,lives=?,last_correct=?,last_reason=?,last_value=? WHERE id=? AND phase='active' AND cursor=? AND deadline=?",[game.score,game.cursor,game.phase,game.reason,game.finished_at,game.elapsed_ms,game.lives,game.last_correct,game.last_reason,game.last_value,game.id,previousCursor,game.deadline]).run();
   game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
   return game.phase==='done'?result(db,game,firebase):readyGame(game);
 }
@@ -98,7 +98,7 @@ export default {
       const cloudGames=env.FIREBASE_GAMES_ENABLED==='true'?createFirebaseGames(env):null;
       if(!cloudGames&&!env.DB) fail('El ranking no está disponible. Intentá nuevamente.',503);
       const firebase=firebaseEnabled(env)?createFirebaseRanking(env,VERSION):null;
-      if(request.method==='GET'&&url.pathname==='/api/leaderboard') {const page=parseRankingPage(url.searchParams);return json(await (cloudGames?cloudGames.leaderboard(page):leaderboard(env.DB,firebase,page)));}
+      if(request.method==='GET'&&url.pathname==='/api/leaderboard') {const page=parseRankingPage(url.searchParams),fresh=url.searchParams.get('fresh')==='1';return json(await (cloudGames?cloudGames.leaderboard(page,fresh):leaderboard(env.DB,firebase,page,fresh)));}
       if(request.method!=='POST') return json({error:'No encontrado.'},404);
       if(!request.headers.get('Content-Type')?.includes('application/json')) fail('Formato inválido.',415);
       if(Number(request.headers.get('Content-Length')||0)>2048) fail('Solicitud demasiado grande.',413);

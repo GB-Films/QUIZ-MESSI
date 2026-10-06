@@ -1,5 +1,5 @@
 import { orderedQuestions } from '../dist/questions.js';
-import { VERSION, TIME, RULES_VERSION, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
+import { VERSION, TIME, RULES_VERSION, gameQuestions, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
 import { createFirestoreClient, createFirebaseRanking, documentWrite, unpack, isConflict } from './firestore.js';
 
 // Each game and player has its own randomly distributed document. No shared SQL writer.
@@ -9,6 +9,7 @@ export function createFirebaseGames(env) {
   const gamePath = id => `${root}/quizGameVersions/${VERSION}/games/${id}`;
   const playerPath = hash => `${root}/quizPlayerVersions/${VERSION}/identities/${hash}`;
   const get = path => request(path,undefined,true);
+  const savedResult = game => ({phase:'done',score:game.score,elapsedMs:game.elapsed_ms,reason:game.reason,avatar:game.avatar,nickname:game.nickname,resultSaved:true,rankingPending:true,rank:null,...feedback(game)});
   const commit = writes => request(`${root}:commit`,{writes});
   async function retry(operation) {
     for (let attempt=0;attempt<5;attempt++) {
@@ -49,7 +50,7 @@ export function createFirebaseGames(env) {
     return writes;
   }
   return {
-    leaderboard: page => ranking.leaderboard(page),
+    leaderboard: (page,fresh=false) => ranking.leaderboard(page,fresh),
     async start(body,now) {
       const nickname = cleanName(body.nickname);
       if (!Number.isInteger(body.avatar)||body.avatar<1||body.avatar>4) fail('Elegí un personaje.');
@@ -68,11 +69,11 @@ export function createFirebaseGames(env) {
         const rate = rateDoc?unpack(rateDoc):{starts:0};
         if (rate.starts>=60) fail('Llegaste al límite de partidas por hora. Volvé más tarde.',429);
         const player = playerDoc?unpack(playerDoc):{token_hash:hash,public_id:crypto.randomUUID(),nickname,avatar:body.avatar,version:VERSION,score:-1,elapsed_ms:0,updated_at:now};
-        const game = newGame(id,hash,nickname,body.avatar,now);
+        const game = newGame(id,hash,nickname,body.avatar,Date.now());
         const writes = [documentWrite(gamePath(id),game,null),documentWrite(`${root}/quizRateLimits/${await digest(hash+Math.floor(now/3600000))}`,{starts:rate.starts+1,expires_at:now+86400000},rateDoc)];
         if (!playerDoc) writes.push(documentWrite(playerPath(hash),player,null));
         await commit(writes);
-        return {gameToken:id,playerToken:token,...publicGame(game,now)};
+        return {gameToken:id,playerToken:token,...publicGame(game,Date.now())};
       });
     },
     async action(action,body,now) {
@@ -87,26 +88,27 @@ export function createFirebaseGames(env) {
           // Retrying a lost "next" response returns the same active question and deadline.
           if (game.phase==='active') return publicGame(game,now);
           if (game.phase!=='ready') fail('Primero respondé la pregunta actual.',409);
-          Object.assign(game,{phase:'active',issued_at:now,deadline:now+TIME});
+          const issued=Date.now();Object.assign(game,{phase:'active',issued_at:issued,deadline:issued+TIME});
           await commit([documentWrite(gamePath(game.id),game,previous)]);
-          return publicGame(game,now);
+          return publicGame(game,Date.now());
         }
         if (action==='state') {
           if (game.phase==='ready') return readyGame(game);
           if (!expired(game,now)) return publicGame(game,now);
-          applyAnswer(game,{questionId:orderedQuestions[game.cursor].id,choice:null},now);
+          applyAnswer(game,{questionId:gameQuestions(game)[game.cursor].id,choice:null},now);
           await commit(game.phase==='done'?await finishWrites(game,previous):[documentWrite(gamePath(game.id),game,previous)]);
           return game.phase==='done'?result(game):readyGame(game);
         }
         if (action!=='answer') fail('Operación no encontrada.',404);
         if (game.phase==='ready') {
-          if (orderedQuestions[game.cursor-1]?.id===body.questionId) return readyGame(game);
+          if (gameQuestions(game)[game.cursor-1]?.id===body.questionId) return readyGame(game);
           fail('La pregunta cambió.',409);
         }
         if(!applyAnswer(game,body,now))return publicGame(game,now);
         const finished=game.phase==='done';
         await commit(finished?await finishWrites(game,previous):[documentWrite(gamePath(game.id),game,previous)]);
-        return finished?result(game):readyGame(game);
+        // The record is already committed. Show correction without waiting for ranking reads.
+        return finished?savedResult(game):readyGame(game);
       });
     }
   };
