@@ -29,17 +29,17 @@ function setup(){
  busy=false;game=null;
  screen('setup',`<div class="setup-wrap"><header class="brand"><b>10</b><span>MESSI<small>EL QUIZ ALBICELESTE</small></span><span class="stars">★ ★ ★</span></header>
  <p class="eyebrow">125 PREGUNTAS · DE FÁCIL A EXPERTO</p><h1 tabindex="-1">DIEZ CHANCES.<br><em>TODO POR EL 10.</em></h1>
- <p class="hook">Tenés <strong>10 vidas en este dispositivo</strong> y <strong>10 segundos por pregunta</strong>. Cada error o tiempo agotado cuesta una vida. Te mostramos la respuesta correcta y seguís con la siguiente pregunta.</p>${balls(10)}<p class="challenge">Las vidas no se renuevan. Cuando perdés las diez, el desafío termina y no podés volver a jugar. Tu progreso queda guardado.</p>
+ <p class="hook"><strong>10 vidas. 10 segundos por pregunta.</strong> Cada error o tiempo agotado resta una vida.</p>${balls(10)}<p class="challenge">No se renuevan: al perder las 10, se termina. Tu progreso se guarda.</p>
  <form id="setup-form"><label class="field-label" for="nickname">TU NOMBRE EN EL RANKING</label><input id="nickname" name="nickname" minlength="2" maxlength="20" required autocomplete="nickname" placeholder="¿Cómo te llaman?" value="${esc(saved.nickname||'')}">
- <div class="earned-hook"><b>¿QUÉ MESSI SOS?</b><p>${tiers.length} versiones de Leo. Tu puntaje decide cuál sos.<br>De mirar desde el banco a besar la Copa. Y un último nivel para quien acierte las 125.</p></div>
- <p class="privacy">Tu nombre, personaje y mejor resultado serán públicos. Tus vidas y tu progreso se reconocen en este navegador. Usá siempre el mismo para retomar.</p><button class="primary" id="start" type="submit">Estoy listo. Vamos.</button><p class="error" id="setup-error" role="alert"></p></form>
- <button class="link-button" id="show-ranking">Ver ranking global</button><details class="credits"><summary>Sobre el quiz y las fotos</summary><p>Edición de 125 preguntas: <a href="https://www.afa.com.ar/es/posts/125-goles-207-partidos-y-una-historia-que-cambio-para-siempre-a-la-seleccion-argentina" target="_blank" rel="noopener">125 goles de Messi con Argentina según AFA</a>. Incluye Selección mayor, Sub-20 y Juegos Olímpicos. Quiz independiente.</p><p>Fotos y fuentes: ${tiers.map(a=>`<a href="${a.source}" target="_blank" rel="noopener">${a.name}</a>`).join(' · ')}. Créditos fotográficos en las fuentes enlazadas.</p><p>Ranking: mejor resultado por navegador. Ganan más aciertos; en un empate, menor tiempo acumulado. Si ambos coinciden, el récord alcanzado primero. La foto del ranking corresponde al récord, la del resultado a la partida recién jugada.</p></details></div>`);
+ <div class="earned-hook"><b>¿QUÉ MESSI SOS?</b><p>${tiers.length} versiones de Leo. Tu puntaje decide cuál sos.</p></div>
+ <button class="primary" id="start" type="submit">Arrancar partido</button><p class="error" id="setup-error" role="alert"></p></form>
+ <button class="link-button" id="show-ranking">Ver ranking global</button></div>`);
  app.querySelector('#setup-form').onsubmit=async event=>{
   event.preventDefault();if(busy)return;if(!storageReady){app.querySelector('#setup-error').textContent='Activá el almacenamiento del navegador para guardar tus diez vidas y tu progreso.';return;}busy=true;
  const nickname=app.querySelector('#nickname').value.trim(),button=app.querySelector('#start');button.disabled=true;button.textContent='Entrando a la cancha…';
  if(!saved.pendingStart||saved.pendingStart.nickname!==nickname)saved.pendingStart={nickname,avatar:3,playerToken:saved.playerToken||crypto.randomUUID(),requestId:crypto.randomUUID()};persist();
  try{const data=await api('start',saved.pendingStart);saved={...saved,nickname,playerToken:data.playerToken,gameToken:data.gameToken};delete saved.pendingStart;persist();game=data;showGame(data);focusTitle();}
-  catch(error){app.querySelector('#setup-error').textContent=error.message;button.disabled=false;button.textContent='Estoy listo. Vamos.';}finally{busy=false;}
+  catch(error){app.querySelector('#setup-error').textContent=error.message;button.disabled=false;button.textContent='Arrancar partido';}finally{busy=false;}
  };
  app.querySelector('#show-ranking').onclick=()=>showRanking();
 }
