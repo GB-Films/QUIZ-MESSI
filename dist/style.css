@@ -42,9 +42,10 @@ body{min-width:0}.ball{flex:0 0 20px;width:20px;text-align:center;font-size:17px
 .setup-wrap .earned-hook{margin:0;padding:0 0 0 10px}.setup-wrap .earned-hook>b{font-size:21px}.setup-wrap .earned-hook p{font-size:13px;line-height:1.3;margin-top:3px}
 .setup-wrap .error{margin:0;font-size:12px;line-height:1.3}.setup-wrap .error:empty{display:none}.setup-wrap .primary{min-height:44px;padding:10px 14px}
 .setup-wrap>.secondary{margin:0;min-height:44px;padding:8px 12px}.setup-wrap>.menu-caption{margin:0;font-size:11px}
-.result-wrap{display:flex;flex-direction:column;gap:clamp(8px,1.6dvh,16px);border:0;border-radius:0;background:none}
+.result-wrap{display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,1.6dvh,16px);border:0;border-radius:0;background:none}
 .result-wrap>:not(.portrait){flex-shrink:0}
 .result-title .eyebrow{margin:0 0 6px}.result-title h1{font-size:clamp(27px,5dvh,42px);line-height:1.05}
+.result-title .result-status{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}.whistle{flex-shrink:0}
 .result-wrap>.portrait{flex:0 1 auto;width:100%;height:auto;min-height:0;max-height:min(38dvh,300px);object-fit:contain;margin:0;background:none}
 .result-wrap .tier-copy{margin:0;font-size:clamp(13px,2dvh,16px);line-height:1.35}
 .result-summary{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:12px}

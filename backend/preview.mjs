@@ -39,7 +39,7 @@ import {results} from '/app.js';import {tiers} from '/tiers.js';
 const score=Math.min(125,Math.max(0,Math.trunc(Number(new URL(location.href).searchParams.get('score'))||0)));
 const entries=tiers.slice().reverse().map((t,i)=>({id:i===0?'preview':'preview-'+i,nickname:i===0?'Vista de prueba':'Prueba '+(tiers.length-i),score:t.max}));
 results({phase:'done',lives:score===125?10:0,reason:score===125?'complete':'lives',score,nickname:'Vista de prueba',rank:1,bestScore:125,total:10,playerId:'preview',entries:entries.slice(0,5)});
-document.querySelector('.result-title .eyebrow').textContent='VISTA DE PRUEBA · FIN DEL PARTIDO';
+document.title='Vista de prueba · Resultado del quiz';
 </script></body></html>`);return;
   }
   const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
