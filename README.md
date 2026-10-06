@@ -8,20 +8,30 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 
 | Aciertos | Resultado |
 | --- | --- |
-| 0–13 | Messi en el banco · Alemania 2006 |
-| 14–27 | Messi debutante · primer gol mundialista 2006 |
-| 28–41 | Messi olímpico · con Agüero y las medallas de oro de Beijing 2008 |
-| 42–55 | Messi con el Diego · abrazo tras la eliminación en Sudáfrica 2010 |
-| 56–69 | Messi finalista · Brasil 2014 |
-| 70–83 | Messi salvador · Quito 2017 |
-| 84–97 | Messi de América · 2021 |
-| 98–104 | Messi de Wembley · Finalissima 2022 |
-| 105–110 | Messi de la remontada · festejo del gol ante Egipto en 2026 |
-| 111–123 | Messi campeón del mundo · besando la Copa en Qatar 2022 |
-| 124 | Messi de la última final · foto con lágrimas y medalla de plata que publicó en Instagram tras el Mundial 2026 |
-| 125 | Messi Grido · nivel exclusivo para un pleno |
+| 0–5 | Messi en el banco · ALEMANIA 2006 |
+| 6–11 | Messi de los 43 segundos · EL DEBUT ANTE HUNGRÍA · 2005 |
+| 12–17 | Messirve · EL MEME DE LOS LENTES |
+| 18–23 | Messi debutante · PRIMER GOL MUNDIALISTA · 2006 |
+| 24–29 | Messi olímpico · ORO EN BEIJING · 2008 |
+| 30–35 | Messi con el Diego · EL ABRAZO · MUNDIAL 2010 |
+| 36–41 | Messi del último minuto · EL ZURDAZO ANTE IRÁN · BRASIL 2014 |
+| 42–47 | Messi finalista · BRASIL 2014 |
+| 48–53 | Messi del tiro libre · EL GOLAZO ANTE ESTADOS UNIDOS · 2016 |
+| 54–59 | Messi capitán · LA CONFERENCIA CON EL PLANTEL · 2016 |
+| 60–65 | Messi salvador · EL HAT-TRICK DE QUITO · 2017 |
+| 66–71 | Messi del control imposible · EL GOL ANTE NIGERIA · RUSIA 2018 |
+| 72–83 | Messi de América · COPA AMÉRICA 2021 |
+| 84–89 | Messi de Wembley · FINALISSIMA 2022 |
+| 90–95 | Messi del desahogo · EL GOL ANTE MÉXICO · QATAR 2022 |
+| 96–100 | Messi Topo Gigio · EL FESTEJO ANTE PAÍSES BAJOS · QATAR 2022 |
+| 101–104 | Messi «andá pa’ allá, bobo» · LA ENTREVISTA CON GASTÓN EDUL · QATAR 2022 |
+| 105–110 | Messi de la remontada · GOL ANTE EGIPTO · MUNDIAL 2026 |
+| 111–114 | Messi de rodillas · EL FESTEJO ANTE INGLATERRA · MUNDIAL 2026 |
+| 115–123 | Messi campeón del mundo · QATAR 2022 |
+| 124 | Messi de la última final · MEDALLA DE PLATA · MUNDIAL 2026 |
+| 125 | Messi Grido · EL NIVEL DEFINITIVO |
 
-Los doce niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa el abrazo de Messi y Maradona sin los demás integrantes del cuerpo técnico.
+Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa el abrazo de Messi y Maradona sin los demás integrantes del cuerpo técnico.
 
 El ranking usa almacenamiento compartido en el servidor, separado de GitHub Pages. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 
@@ -55,7 +65,7 @@ Para generar nuevas migraciones se instalan las herramientas con `npm install` y
 
 ## Fotografías
 
-Se usan doce fotografías existentes. Cada resultado enlaza la fuente de su foto; el inicio reúne las doce referencias. Fuentes: TyC Sports, TNT Sports, UOL (Koji Watanabe/Getty Images), La Capital, Meridiano/AS, O Globo, AS, El Destape, TN/Reuters, beIN Sports, Infobae e iProfesional. Créditos fotográficos en las páginas enlazadas. La imagen final es la foto de Messi joven en Grido, no la de un parecido a Messi. Las fotografías no fueron generadas ni se afirma propiedad o licencia comercial sobre ellas.
+Se usan veintidós imágenes existentes. Cada resultado enlaza la fuente de su foto; el inicio reúne las veintidós referencias. Se agregaron diez momentos a partir de las referencias del usuario: Hungría, Messirve, Irán, el tiro libre a Estados Unidos, la conferencia del capitán, el control ante Nigeria, México, Topo Gigio, la entrevista con Edul y el festejo de rodillas ante Inglaterra. Las imágenes del control ante Nigeria y del festejo de rodillas conservan exactamente los archivos aportados por el usuario; se verificó el momento y se enlazó una publicación del mismo. Fuentes: ESPN, Plantillas de Memes, RPP, Globo/AP, Notimérica, MDZ/EFE, Todo Jujuy, Futbolargentino, TyC Sports, TNT Sports, UOL (Koji Watanabe/Getty Images), La Capital, Meridiano/AS, O Globo, AS, El Destape, TN/Reuters, beIN Sports, Infobae e iProfesional. Créditos fotográficos en las páginas enlazadas. La imagen final es la foto de Messi joven en Grido, no la de un parecido a Messi. Las fotografías no fueron generadas ni se afirma propiedad o licencia comercial sobre ellas.
 
 ## Preguntas
 

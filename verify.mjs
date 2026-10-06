@@ -17,15 +17,17 @@ assert.equal(new Set(questions.map(q => q.category)).size, 5);
 const html = await readFile('./dist/index.html', 'utf8');
 for (const asset of ['style.css', 'app.js', 'questions.js', 'favicon.svg']) await readFile(`./dist/${asset}`);
 assert.ok(html.includes('lang="es-AR"'));
-assert.equal(tiers.length, 12);
-assert.equal(new Set(tiers.map(t => t.image)).size, 12);
+assert.equal(tiers.length, 22);
+assert.equal(new Set(tiers.map(t => t.image)).size, 22);
 for (let score=0;score<=125;score++) {
  assert.equal(tiers.filter(t => score>=t.min && score<=t.max).length,1,`Un solo nivel para ${score} aciertos`);
  assert.ok(tierForScore(score));
 }
 assert.equal(tierForScore(0).name,'Messi en el banco');
-assert.equal(tierForScore(111).name,'Messi campeón del mundo');
-assert.equal(tierForScore(104).name,'Messi de Wembley');
+assert.equal(tierForScore(111).name,'Messi de rodillas');
+assert.equal(tierForScore(115).name,'Messi campeón del mundo');
+assert.equal(tierForScore(89).name,'Messi de Wembley');
+assert.equal(tierForScore(104).name,'Messi «andá pa’ allá, bobo»');
 assert.equal(tierForScore(105).name,'Messi de la remontada');
 assert.equal(tierForScore(110).name,'Messi de la remontada');
 assert.equal(tierForScore(123).name,'Messi campeón del mundo');
@@ -36,4 +38,4 @@ assert.equal(tierForScore(125).name,'Messi Grido');
 assert.equal(tiers.at(-1).min,125);
 for (const t of tiers) assert.ok((await readFile(`./dist/assets/levels/${t.image}`)).length>1000,`Foto existente: ${t.name}`);
 for (const score of [-1,126,1.5,NaN]) assert.throws(()=>tierForScore(score),RangeError);
-console.log('125 preguntas verificadas. Doce fotos y todos los niveles de 0 a 125; plata exclusiva de 124 y Grido exclusivo de 125 aciertos.');
+console.log('125 preguntas verificadas. Veintidós fotos y todos los niveles de 0 a 125; plata exclusiva de 124 y Grido exclusivo de 125 aciertos.');
