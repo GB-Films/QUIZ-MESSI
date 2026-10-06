@@ -31,9 +31,9 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 | 124 | Messi de la última final · MEDALLA DE PLATA · MUNDIAL 2026 |
 | 125 | Messi Grido · EL NIVEL DEFINITIVO |
 
-Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa el abrazo de Messi y Maradona sin los demás integrantes del cuerpo técnico.
+Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa exactamente la foto elegida y aportada por el usuario: Maradona abraza y besa a Messi, de espaldas con la camiseta 10. Su enlace abre esa imagen.
 
-El ranking usa almacenamiento compartido en el servidor, separado de GitHub Pages. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
+El ranking admite persistencia en Cloud Firestore (Firebase), separada de GitHub Pages. Se activa al configurar las credenciales de Firebase en el servidor; hasta entonces se mantiene el almacenamiento actual. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 
 ## GitHub Pages
 
@@ -62,6 +62,21 @@ Verificado en 320×568, 375×667 y 390×844. También se comprobaron un acierto,
 `backend/index.js` contiene la API y `drizzle/` la migración de SQLite para D1. El servicio se aloja en el sitio de Messi previamente creado, mientras el enlace de juego continúa en GitHub Pages. `dist/` contiene únicamente la web pública de Pages; el archivo compilado del servidor se prepara en el checkout del servicio, separado del despliegue de Pages.
 
 Para generar nuevas migraciones se instalan las herramientas con `npm install` y se ejecuta `npm run db:generate`. Las migraciones aplicadas se conservan sin modificar. El manifiesto de alojamiento y los secretos no se publican en este repositorio.
+
+### Firebase
+
+`backend/firestore.js` guarda los mejores resultados en `quizRankings/argentina-survival-1/players/{public_id}` mediante la API de Firestore. Con Firebase activo, el top 5, el total de jugadores y la posición individual se consultan en esa base. D1 conserva las partidas y una copia del mejor récord para recuperar escrituras fallidas. Si Firestore falla, la API pide reconectar; no muestra otro ranking ni pierde el resultado de la partida terminada.
+
+Configuración en un proyecto de Firebase dedicado:
+
+1. Crear una base **Cloud Firestore, Standard, modo producción**. Las reglas de `firestore.rules` bloquean el acceso directo desde navegadores; la cuenta del servidor accede mediante IAM.
+2. Configurar en el servidor `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` y `FIREBASE_PRIVATE_KEY`. La clave privada debe guardarse como secreto, fuera del repositorio y de `dist/`. La cuenta necesita permiso de lectura y escritura de Firestore (`roles/datastore.user`).
+3. Antes de activar el nuevo servidor, exportar los récords de `quiz_players` y ejecutar `node backend/migrate-firestore.mjs <jugadores-exportados.json> <cuenta-de-servicio.json>`. La importación conserva IDs, nombres, puntajes, tiempos y fechas; puede repetirse y nunca reemplaza un resultado mejor. No exportar partidas ni tokens privados.
+4. Publicar el servidor y comprobar el ranking. El enlace de GitHub Pages sigue usando la misma API.
+
+Cada escritura usa una precondición de Firestore para evitar que dos partidas simultáneas sobrescriban un récord mejor. `orderKey` mantiene el orden por puntaje, tiempo y fecha con un índice automático de un solo campo; el ID público resuelve empates exactos. No se requieren Cloud Functions ni un cambio de plan para esta integración.
+
+`npm test` comprueba también la autenticación del servidor, persistencia, desempates, escrituras simultáneas, recuperación después de un corte y ausencia de datos privados en el ranking. Estas pruebas simulan la API de Firebase; la conexión real requiere el proyecto y sus credenciales.
 
 ## Fotografías
 

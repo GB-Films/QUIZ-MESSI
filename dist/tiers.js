@@ -60,11 +60,11 @@ export const tiers = [
   "max": 35,
   "name": "Messi con el Diego",
   "era": "EL ABRAZO · MUNDIAL 2010",
-  "image": "04-abrazo-solo-2010.jpg",
-  "position": "50% 35%",
-  "alt": "Diego Maradona abraza a Lionel Messi en el Mundial de Sudáfrica 2010",
-  "copy": "Duele quedar afuera. El abrazo del Diego te sostiene para volver a intentarlo.",
-  "source": "https://www.lacapital.com.ar/ovacion/diego-felicito-messi-el-casamiento-y-le-deseo-lo-mejor-su-familia-n1426388.html"
+  "image": "04-abrazo-diego-elegida.png",
+  "position": "50% 30%",
+  "alt": "Diego Maradona abraza y besa a Lionel Messi, que está de espaldas con la camiseta 10 de Argentina",
+  "copy": "Messi y el Diego, juntos. Dos dieces en un abrazo para la historia.",
+  "source": "https://gb-films.github.io/QUIZ-MESSI/assets/levels/04-abrazo-diego-elegida.png"
  },
  {
   "min": 36,
