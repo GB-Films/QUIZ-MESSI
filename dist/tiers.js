@@ -93,7 +93,7 @@ export const tiers = [
   "max": 53,
   "name": "Messi del tiro libre",
   "era": "EL GOLAZO ANTE ESTADOS UNIDOS · 2016",
-  "image": "14-tiro-libre-2016.jpg",
+  "image": "14-tiro-libre-2016-limpia.png",
   "position": "55% 40%",
   "alt": "La reacción de Messi tras su gol de tiro libre a Estados Unidos en la Copa América Centenario",
   "copy": "La mandaste al ángulo. Hasta vos te sorprendiste de lo que sabés.",
