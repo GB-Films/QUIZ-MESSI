@@ -1,0 +1,7 @@
+Tool: built-in image_gen
+Asset: dist/assets/logo-saludo-10.png
+Background: transparent
+Reference: the user requested a back-view football celebration with the jersey number 10. The final image is a generic fictional football icon.
+
+Final prompt:
+Create a minimal sports logo of a fictional, generic football player, viewed entirely from behind, with a simple featureless rounded head and short hair. It must not depict or reproduce any real person's recognizable likeness. Both arms extend outward and bend upward, and both index fingers point to the sky in a universal football celebration. Show the full head, torso to waist, arms and both hands with fingers visible. Use a solid light sky-blue silhouette (#89d4ff) on a genuinely transparent background, and put one very large dark-navy (#081c2a) athletic jersey number "10" centered on the back. Only text is exactly "10", thick simple strokes legible when used as a small app logo. Simple clean vector-like edges, no gradients, glow, shadows, texture, shirt stripes, sponsors, names, emblems, or square frame. Nearly square centered composition, silhouette fills the image with small transparent margins. Do not crop hands or fingers. This is a symbolic generic fictional football icon, not a portrait.

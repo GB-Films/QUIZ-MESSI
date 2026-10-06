@@ -27,7 +27,7 @@ async function api(action,body,params=''){
 function focusTitle(){app.querySelector('h1,h2')?.focus({preventScroll:true});}
 function setup(){
  busy=false;if(game?.phase!=='done')game=null;const finished=game?.phase==='done';
- screen('setup',`<div class="setup-wrap"><header class="brand"><b>10</b><span>MESSI<small>EL QUIZ ALBICELESTE</small></span><span class="stars">★ ★ ★</span></header>
+ screen('setup',`<div class="setup-wrap"><header class="brand"><img class="brand-logo" src="./assets/logo-saludo-10.png" width="54" height="54" alt="Silueta de un futbolista de espaldas, celebrando con el 10 en la camiseta"><span>MESSI<small>EL QUIZ ALBICELESTE</small></span><span class="stars">★ ★ ★</span></header>
  <h1 tabindex="-1">DIEZ CHANCES.<br><em>TODO POR EL 10.</em></h1>
  <p class="hook"><strong>125 preguntas. 10 vidas. 10 segundos para responder.</strong></p><p class="challenge">Cada error o tiempo agotado resta una vida. Si te quedás sin vidas, se termina la carrera.</p>
  <form id="setup-form"><label class="field-label" for="nickname">TU NOMBRE EN EL RANKING</label><input id="nickname" name="nickname" minlength="2" maxlength="20" required autocomplete="nickname" placeholder="¿Cómo te llaman?" value="${esc(finished?game.nickname:(saved.nickname||''))}" ${finished?'disabled':''}>
