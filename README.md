@@ -8,7 +8,7 @@ La pregunta 125 es «¿Quién es el mejor jugador de la historia?»: Lionel, And
 
 El navegador conserva un identificador privado. No es una verificación del dispositivo físico: cambiar de navegador, usar una sesión privada o borrar sus datos puede crear otra identidad. Un límite estricto entre navegadores requiere identificación adicional.
 
-Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida determinan qué Messi sos, con una foto real de su historia. El ranking muestra la foto ganada por el mejor récord de cada jugador, además de su posición global. Compartir incluye el Messi ganado y el puntaje.
+Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida determinan qué Messi sos, con una foto real de su historia. El ranking muestra la foto ganada por el mejor récord de cada jugador, además de su posición global. El resultado final muestra sólo el Messi ganado, su foto y descripción, los aciertos de esa partida, el puesto global y el acceso al ranking. No incluye vidas, la última respuesta ni un listado de jugadores.
 
 | Aciertos | Resultado |
 | --- | --- |
@@ -37,7 +37,7 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 
 Los veintidós niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa exactamente la foto elegida y aportada por el usuario: Maradona abraza y besa a Messi, de espaldas con la camiseta 10. Su enlace abre esa imagen.
 
-El ranking y las partidas se guardan en Cloud Firestore (Firebase), separado de GitHub Pages, en el proyecto `quiz-messi-8674d`. Al agotar las diez vidas o completar el quiz, la partida y el nuevo récord se guardan juntos antes de mostrar el resultado. También se registra un primer resultado de cero aciertos. Cualquier visitante puede abrir el ranking global sin jugar ni iniciar sesión y recorrer todos los récords en páginas de veinte jugadores; el resultado mantiene el top cinco y ofrece acceso al listado completo. Los nuevos récords pueden tardar hasta quince segundos en aparecer por la caché de lectura. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
+El ranking y las partidas se guardan en Cloud Firestore (Firebase), separado de GitHub Pages, en el proyecto `quiz-messi-8674d`. Al agotar las diez vidas o completar el quiz, la partida y el nuevo récord se guardan juntos antes de mostrar el resultado. También se registra un primer resultado de cero aciertos. Cualquier visitante puede abrir el ranking global sin jugar ni iniciar sesión y recorrer todos los récords en páginas ajustadas al alto de la pantalla; el resultado muestra el puesto personal y ofrece acceso al listado completo en otra pantalla. Los nuevos récords pueden tardar hasta quince segundos en aparecer por la caché de lectura. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 
 ## GitHub Pages
 
@@ -57,9 +57,9 @@ npm start
 
 Abrir `http://127.0.0.1:4173/`.
 
-`/layout-check.html` está disponible sólo en la vista previa: renderiza las 125 preguntas para comprobar que el texto y el botón siguiente no se superponen ni requieren scroll. `/results-check.html?score=125` permite revisar los niveles y las fotos con resultados ficticios identificados como «Vista de prueba», sin escribir en el ranking.
+`/screen-check.html` está disponible sólo en la vista previa: comprueba que el inicio, las 125 preguntas, sus respuestas y todos los resultados entren en la pantalla; recorre el ranking con 37 jugadores ficticios en memoria y verifica el regreso al resultado. No modifica datos públicos. `/layout-check.html` también está disponible sólo en la vista previa: renderiza las 125 preguntas para comprobar que el texto y el botón siguiente no se superponen ni requieren scroll. `/results-check.html?score=125` permite revisar los niveles y las fotos con resultados ficticios identificados como «Vista de prueba», sin escribir en el ranking.
 
-Verificado en 320×568, 375×667 y 390×844. También se comprobaron un acierto, un error, el tiempo agotado, reintentos de respuestas, recuperación de partidas y conservación del mejor récord.
+Pantallas verificadas sin scroll en 320×480, 320×568, 375×667, 390×844, 568×320 y 1440×1080, con preguntas, respuestas, resultados y navegación completa del ranking. También se comprobaron un acierto, un error, el tiempo agotado, reintentos de respuestas, recuperación de partidas y conservación del mejor récord.
 
 ## Retomar desde otra computadora
 

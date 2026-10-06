@@ -1,0 +1,51 @@
+<!doctype html><html lang="es-AR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><title>Verificación local de pantallas</title></head><body><main id="app"></main><script type="module">
+import {setup,showGame,readyScreen,results} from '/app.js';
+import {orderedQuestions} from '/questions.js';
+import {tiers} from '/tiers.js';
+await document.fonts.ready;
+await Promise.all(tiers.map(t=>new Promise(resolve=>{const image=new Image();image.onload=image.onerror=resolve;image.src='/assets/levels/'+t.image;})));
+const failures=[];let checked=0;
+async function check(name){
+ await new Promise(requestAnimationFrame);checked++;
+ const outside=[...document.querySelectorAll('#app *')].filter(el=>{
+  const r=el.getBoundingClientRect();return r.width&&r.height&&(r.top<-.5||r.left<-.5||r.bottom>innerHeight+.5||r.right>innerWidth+.5);
+ }).map(el=>el.id||el.className||el.tagName);
+ if(document.documentElement.scrollHeight>innerHeight+1||document.documentElement.scrollWidth>innerWidth+1||outside.length)failures.push({name,outside});
+ if(document.body.dataset.screen==='game'){
+  const question=document.querySelector('.question-block').getBoundingClientRect(),options=document.querySelector('.options').getBoundingClientRect(),next=document.querySelector('#next').getBoundingClientRect();
+  if(Math.min(question.right,options.right)>Math.max(question.left,options.left)+1&&Math.min(question.bottom,options.bottom)>Math.max(question.top,options.top)+1)failures.push({name,overlap:'question/options'});
+  if(options.bottom>next.top+1)failures.push({name,overlap:'options/button'});
+ }
+}
+setup();await check('inicio');
+document.querySelector('#setup-error').textContent='Se cortó la conexión. Reconectá para seguir.';await check('inicio con error');
+for(const q of orderedQuestions){
+ showGame({phase:'active',score:0,lives:10,number:125,total:125,remainingMs:3600000,question:{id:q.id,text:q.question,difficulty:q.difficulty,options:q.options,final:!!q.acceptAll}});await check('pregunta '+q.id);
+ for(const correct of [true,false]){readyScreen({phase:'ready',correct,answered:1,total:125,lives:9,answer:q.answer,explanation:q.explanation,score:1,lastReason:'timeout'});await check('respuesta '+q.id+' '+correct);}
+}
+for(const tier of tiers){
+ for(const rankingPending of [false,true]){
+  results({phase:'done',reason:tier.max===125?'complete':'lives',score:tier.max,lives:0,nickname:'Prueba de pantalla',rank:1234567,rankingPending});await check('resultado '+tier.max+' '+rankingPending);
+  if(document.querySelector('.lives,.last-answer,.ranking'))failures.push({name:'contenido extra en resultado'});
+ }
+}
+document.querySelector('#full-ranking').click();
+while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);
+await check('ranking');
+let seen=0,pages=0;const names=[];
+while(true){
+ names.push(...[...document.querySelectorAll('.rank-name')].map(el=>el.firstChild.textContent));
+ seen+=document.querySelectorAll('.ranking-row').length;pages++;
+ const next=document.querySelector('#next-page');if(next.disabled)break;next.click();
+ while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);
+ await check('ranking página '+pages);
+}
+if(seen<37||new Set(names).size!==seen)failures.push({name:'ranking incompleto o duplicado',seen});
+if(pages>1){document.querySelector('#previous-page').click();while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);await check('ranking página anterior');}
+document.querySelector('#back').click();await check('volver al menú');
+if(!document.querySelector('#nickname').disabled||document.querySelector('#start').textContent!=='Ver mi resultado')failures.push({name:'el menú permite reiniciar una partida terminada'});
+document.querySelector('#start').click();await check('volver al resultado');
+if(document.body.dataset.screen!=='result'||document.querySelector('.result-score').textContent.trim()!=='125 / 125')failures.push({name:'no volvió al resultado original'});
+document.body.dataset.screen='check';document.querySelector('#app').innerHTML='<pre id="check-result"></pre>';
+document.querySelector('#check-result').textContent=JSON.stringify({viewport:[innerWidth,innerHeight],checked,rankingPlayers:seen,pages,failures},null,2);
+</script></body></html>

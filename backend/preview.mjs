@@ -27,6 +27,11 @@ if(document.documentElement.scrollHeight>innerHeight||document.documentElement.s
 document.querySelector('#status').textContent=failures.length?'ERRORES: '+JSON.stringify(failures):'125 PREGUNTAS VERIFICADAS: SIN SCROLL';
 </script></body></html>`);return;
   }
+  if(url.pathname==='/screen-check.html'){
+   // Datos ficticios sólo en la base en memoria de la vista previa.
+   for(let i=0;i<37;i++)sqlite.prepare('INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,score,elapsed_ms,updated_at) VALUES (?,?,?,?,?,?,?,?)').run('screen-check-'+i,'screen-check-'+String(i).padStart(2,'0'),'Prueba de pantalla '+i,3,'argentina-survival-1',Math.max(0,125-i*4),500,1900000000000+i);
+   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await readFile('backend/screen-check.html'));return;
+  }
   if(url.pathname==='/results-check.html'){
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
    res.end(`<!doctype html><html lang="es-AR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><main id="app"></main><script type="module">
@@ -34,6 +39,7 @@ import {results} from '/app.js';import {tiers} from '/tiers.js';
 const score=Math.min(125,Math.max(0,Math.trunc(Number(new URL(location.href).searchParams.get('score'))||0)));
 const entries=tiers.slice().reverse().map((t,i)=>({id:i===0?'preview':'preview-'+i,nickname:i===0?'Vista de prueba':'Prueba '+(tiers.length-i),score:t.max}));
 results({phase:'done',lives:score===125?10:0,reason:score===125?'complete':'lives',score,nickname:'Vista de prueba',rank:1,bestScore:125,total:10,playerId:'preview',entries:entries.slice(0,5)});
+document.querySelector('.result-title .eyebrow').textContent='VISTA DE PRUEBA · FIN DEL PARTIDO';
 </script></body></html>`);return;
   }
   const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
