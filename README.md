@@ -8,6 +8,8 @@ La pregunta 125 es «¿Quién es el mejor jugador de la historia?»: Lionel, And
 
 El navegador conserva un identificador privado. No es una verificación del dispositivo físico: cambiar de navegador, usar una sesión privada o borrar sus datos puede crear otra identidad. Un límite estricto entre navegadores requiere identificación adicional.
 
+Los nombres pueden repetirse: cada récord pertenece a un ID público asociado a la identidad privada, nunca al nombre ni a la IP. Reabrir la misma identidad conserva su única partida y su mayor puntaje. Borrar la caché o los datos de un navegador no elimina los resultados guardados en Firebase; borrar toda la identidad local permite jugar con una identidad nueva y conserva el récord anterior en el histórico. Esto está permitido: no se agrega registro ni recuperación de identidad. Los resultados no tienen caducidad ni una operación pública de borrado.
+
 Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida determinan qué Messi sos, con una foto real de su historia. El ranking muestra la foto ganada por el mejor récord de cada jugador, además de su posición global. El resultado final muestra sólo el Messi ganado, su foto y descripción, los aciertos de esa partida, el puesto global y el acceso al ranking. No incluye vidas, la última respuesta ni un listado de jugadores.
 
 | Aciertos | Resultado |
@@ -138,6 +140,8 @@ Las pruebas recorren el banco completo y comprueban las cuatro opciones finales,
 ## Navegación del menú
 
 El ranking histórico muestra hasta 100 jugadores por página, con los mismos puestos en todos los tamaños de pantalla. La lista usa el scroll vertical de la página y «Anterior»/«Siguiente» para grupos posteriores; esos botones se ocultan si todos los participantes entran en una sola página. El refresco automático y el regreso a la pestaña conservan la página y la posición de scroll. La API admite bloques de 50 y la interfaz reúne hasta dos bloques sin modificar el servidor publicado.
+
+Después de jugar, «Tu posición global» permanece arriba de la lista al desplazarse: muestra el puesto total del jugador y los aciertos y la foto de su mejor récord, aunque su fila esté fuera de los primeros 100. La posición se consulta nuevamente mediante la partida terminada al abrir o refrescar el ranking. Si esa consulta falla, se conserva el acceso al listado y se ofrece actualizar la posición; no se inventa un puesto a partir de la página visible. Los visitantes que todavía no jugaron ven únicamente el ranking global.
 
 El inicio incluye un botón visible «Ver ranking histórico». El ranking y el resultado final permiten volver al menú principal. Volver al menú conserva la partida terminada y sus vidas: muestra «Ver mi resultado» y permite consultar el ranking, sin habilitar una partida nueva. El servidor mantiene el bloqueo de la edición al agotar diez vidas o completar el quiz.
 

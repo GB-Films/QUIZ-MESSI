@@ -141,7 +141,7 @@ sqlite.exec(await readFile('drizzle/0002_accepted_answer.sql','utf8'));
     assert.equal(finished.resultSaved,true);assert.equal(finished.rankingPending,true);assert.equal(finished.lives,0);
     rankingOutage=false;assert.ok(Number.isInteger((await cloudPost('state',{gameToken:recovered.gameToken})).rank));
     const totalBefore=(await createFirebaseRanking(env,VERSION).leaderboard()).total;
-    const games=await Promise.all(Array.from({length:100},(_,i)=>cloudPost('start',{nickname:'Carga '+i,avatar:3,playerToken:crypto.randomUUID()})));
+    const games=await Promise.all(Array.from({length:100},(_,i)=>cloudPost('start',{nickname:i<2?'Mismo nombre':'Carga '+i,avatar:3,playerToken:crypto.randomUUID()})));
     assert.ok(games.every(g=>g.status===200));
     for(let round=0;round<10;round++){
       const feedbacks=await Promise.all(games.map(async g=>{const q=round===0?g:await cloudPost('next',{gameToken:g.gameToken});return cloudPost('answer',{gameToken:g.gameToken,questionId:q.question.id,choice:0,value:q.question.options.find(v=>v!==orderedQuestions[q.number-1].answer)});}));
@@ -153,9 +153,17 @@ sqlite.exec(await readFile('drizzle/0002_accepted_answer.sql','utf8'));
       const result=await cloudPost('state',{gameToken:g.gameToken});
       assert.equal(result.phase,'done');assert.equal(result.reason,'lives');assert.equal(result.resultSaved,true);assert.equal(result.score,0);
       const record=entryData(documents.get(`projects/demo-messi/databases/(default)/documents/quizRankings/${VERSION}/players/${result.playerId}`));
-      assert.equal(record.nickname,'Carga '+i);assert.equal(record.score,0);finishedIds.add(result.playerId);
+      assert.equal(record.nickname,i<2?'Mismo nombre':'Carga '+i);assert.equal(record.score,0);finishedIds.add(result.playerId);
     }
     assert.equal(finishedIds.size,100,'Each eliminated player has a distinct saved public record, including zero scores');
+    const duplicates=await Promise.all(games.slice(0,2).map(g=>cloudPost('state',{gameToken:g.gameToken})));
+    assert.notEqual(duplicates[0].playerId,duplicates[1].playerId,'Repeated names never share or overwrite a public record');
+    const resumed=await cloudPost('start',{nickname:'Otro nombre',avatar:3,playerToken:games[0].playerToken});
+    assert.equal(resumed.playerId,duplicates[0].playerId);assert.equal(resumed.phase,'done');assert.equal(resumed.nickname,'Mismo nombre');
+    const clearedBrowser=await cloudPost('start',{nickname:'Mismo nombre',avatar:3,playerToken:crypto.randomUUID()});
+    assert.notEqual(clearedBrowser.gameToken,games[0].gameToken,'A lost browser identity cannot be inferred from a repeated name');
+    assert.equal((await createFirebaseRanking(env,VERSION).leaderboard()).total,totalBefore+100,'Losing browser storage never removes existing cloud records');
+    assert.equal((await cloudPost('state',{gameToken:games[0].gameToken})).playerId,duplicates[0].playerId,'The original saved result remains recoverable with its private identifier');
     let cursor=null;const all=[];
     do{
       const params=new URLSearchParams({limit:'17'});if(cursor)params.set('cursor',cursor);

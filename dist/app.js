@@ -136,6 +136,11 @@ async function next(){
  catch(error){busy=false;app.querySelector('#status').textContent=error.message;button.disabled=false;button.textContent='Reconectar';button.onclick=restore;}
 }
 function rankingRows(data){return data.entries.length?data.entries.map((entry,i)=>`<li class="ranking-row ${entry.id===data.playerId?'you':''}"><b class="rank-position">${(data.startRank??1)+i}</b>${portrait(entry.score,'mini-avatar')}<span class="rank-name">${esc(entry.nickname)}${entry.id===data.playerId?' <small>VOS</small>':''}<span class="rank-tier">${tierForScore(entry.score).name}</span></span><strong>${entry.score}<small> ACIERTOS</small></strong></li>`).join(''):'<li class="empty-ranking">No hay récords en esta página.</li>';}
+function personalRanking(data){
+ if(!data)return '';
+ const score=data.bestScore??data.score,known=!data.rankingPending&&Number.isInteger(data.rank)&&data.rank>0;
+ return `<aside class="ranking-personal" aria-label="Tu posición global"><p class="personal-label">TU POSICIÓN GLOBAL</p><div class="personal-row"><strong class="personal-rank">${known?'#'+new Intl.NumberFormat('es-AR').format(data.rank):'Por actualizar'}</strong>${portrait(score,'mini-avatar')}<div class="personal-player"><span>${esc(data.nickname)}</span><small>${aciertos(score)} · Tu mejor resultado</small></div></div>${known?'':'<button class="link-button" id="refresh-personal-rank">Actualizar mi posición</button>'}</aside>`;
+}
 function results(data){
  busy=false;game=data;
  const tier=tierForScore(data.score);
@@ -155,18 +160,22 @@ async function showRanking(cursor=null,back=setup,previous=[],preserveScroll=fal
  try{
   // El servidor admite bloques de 50; la pantalla reúne hasta 100 por página.
   const params=new URLSearchParams({limit:'50',fresh:'1',_t:String(Date.now())});if(cursor)params.set('cursor',cursor);
-  const data=await api('leaderboard',null,'?'+params);if(generation!==rankingGeneration)return;
+  const personal=game?.phase==='done'&&!PRACTICE?game:null;
+  const personalRequest=personal&&saved.gameToken?api('state',{gameToken:saved.gameToken}).then(updated=>({...personal,...updated})).catch(()=>({...personal,rank:null,rankingPending:true})):Promise.resolve(personal);
+  const [data,updatedPersonal]=await Promise.all([api('leaderboard',null,'?'+params),personalRequest]);if(generation!==rankingGeneration)return;
   if(data.nextCursor&&data.entries.length<RANKING_PAGE_SIZE){
    params.set('cursor',data.nextCursor);params.set('limit',String(Math.min(50,RANKING_PAGE_SIZE-data.entries.length)));
    const continuation=await api('leaderboard',null,'?'+params);if(generation!==rankingGeneration)return;
    data.entries.push(...continuation.entries);data.nextCursor=continuation.nextCursor;data.total=continuation.total;
   }
-  data.playerId=game?.playerId;const scrollPosition=preserveScroll?window.scrollY:0;
-  screen('ranking',`<section class="ranking-wrap"><header><h1 tabindex="-1">RANKING HISTÓRICO</h1><p class="ranking-note">Histórico · ${data.total} ${data.total===1?'participante':'participantes'}</p><p class="ranking-range" role="status">${data.entries.length?`PUESTOS ${data.startRank??1}–${(data.startRank??1)+data.entries.length-1}`:'TODAVÍA NO HAY RÉCORDS'}</p></header><ol class="ranking">${rankingRows(data)}</ol><footer class="ranking-footer"><nav class="ranking-pages" aria-label="Páginas del ranking"><button class="page-button" id="previous-page" ${previous.length?'':'disabled'}>Anterior</button><button class="page-button" id="next-page" ${data.nextCursor?'':'disabled'}>Siguiente</button></nav><button class="link-button" id="refresh-ranking">Actualizar ranking</button><button class="primary" id="back">Volver al menú principal</button></footer></section>`);
+  data.playerId=updatedPersonal?.playerId;if(updatedPersonal)game=updatedPersonal;
+  const scrollPosition=preserveScroll?window.scrollY:0;
+  screen('ranking',`<section class="ranking-wrap"><header><h1 tabindex="-1">RANKING HISTÓRICO</h1><p class="ranking-note">Histórico · ${data.total} ${data.total===1?'participante':'participantes'}</p></header>${personalRanking(updatedPersonal)}<p class="ranking-range" role="status">${data.entries.length?`PUESTOS ${data.startRank??1}–${(data.startRank??1)+data.entries.length-1}`:'TODAVÍA NO HAY RÉCORDS'}</p><ol class="ranking">${rankingRows(data)}</ol><footer class="ranking-footer"><nav class="ranking-pages" aria-label="Páginas del ranking"><button class="page-button" id="previous-page" ${previous.length?'':'disabled'}>Anterior</button><button class="page-button" id="next-page" ${data.nextCursor?'':'disabled'}>Siguiente</button></nav><button class="link-button" id="refresh-ranking">Actualizar ranking</button><button class="primary" id="back">Volver al menú principal</button></footer></section>`);
   app.querySelector('#back').onclick=back;
   app.querySelector('#next-page').onclick=()=>showRanking(data.nextCursor,back,[...previous,cursor]);
   app.querySelector('#previous-page').onclick=()=>showRanking(previous.at(-1),back,previous.slice(0,-1));
   app.querySelector('.ranking-pages').hidden=!previous.length&&!data.nextCursor;
+  const refreshPersonal=app.querySelector('#refresh-personal-rank');if(refreshPersonal)refreshPersonal.onclick=()=>showRanking(cursor,back,previous,true);
   app.querySelector('#refresh-ranking').onclick=()=>showRanking(null,back);if(!preserveScroll)focusTitle();window.scrollTo(0,scrollPosition);
   rankingResume=()=>showRanking(cursor,back,previous,true);
   if(!cursor)rankingRefresh=setInterval(()=>{if(!document.hidden)showRanking(cursor,back,previous,true);},15000);

@@ -40,12 +40,14 @@ for(const tier of tiers){
   if(document.querySelector('.lives,.last-answer,.ranking'))failures.push({name:'contenido extra en resultado'});
  }
 }
+results({phase:'done',reason:'lives',score:0,bestScore:0,lives:0,nickname:'Prueba de pantalla 136',playerId:'screen-check-136',rank:137});
 document.querySelector('#full-ranking').click();
 while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);
 await check('ranking');
 let seen=0,pages=0;const names=[];
 while(true){
  const expected=Math.min(100,137-seen);
+ if(document.querySelector('.personal-rank')?.textContent!=='#137'||!document.querySelector('.personal-player')?.textContent.includes('0 aciertos'))failures.push({name:'el puesto personal fuera de los primeros 100 no permanece visible',page:pages+1});
  if(document.querySelectorAll('.ranking-row').length!==expected)failures.push({name:'la página del ranking cambia con el tamaño de pantalla',page:pages+1,expected});
  names.push(...[...document.querySelectorAll('.rank-name')].map(el=>el.firstChild.textContent));
  seen+=document.querySelectorAll('.ranking-row').length;pages++;
@@ -59,7 +61,7 @@ if(pages>1){document.querySelector('#previous-page').click();while(!document.que
 document.querySelector('#back').click();await check('volver al menú');
 if(!document.querySelector('#nickname').disabled||document.querySelector('#start').textContent!=='Ver mi resultado')failures.push({name:'el menú permite reiniciar una partida terminada'});
 document.querySelector('#start').click();await check('volver al resultado');
-if(document.body.dataset.screen!=='result'||document.querySelector('.result-score').textContent.trim()!=='125 / 125')failures.push({name:'no volvió al resultado original'});
+if(document.body.dataset.screen!=='result'||document.querySelector('.result-score').textContent.trim()!=='0 / 125')failures.push({name:'no volvió al resultado original'});
 document.body.dataset.screen='check';document.querySelector('#app').innerHTML='<pre id="check-result"></pre>';
 document.querySelector('#check-result').textContent=JSON.stringify({viewport:[innerWidth,innerHeight],checked,rankingPlayers:seen,pages,failures},null,2);
 </script></body></html>

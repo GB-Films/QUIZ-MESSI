@@ -66,6 +66,11 @@ body{min-width:0}.ball{flex:0 0 20px;width:20px;text-align:center;font-size:17px
 .ranking-wrap>.ranking{display:flex;flex-direction:column;flex:1}
 .ranking-wrap .ranking-row{flex:1;min-height:68px;padding:10px 0;font-size:14px;gap:9px}.ranking-wrap .rank-tier{font-size:11px;line-height:1.2}
 .ranking-wrap .mini-avatar{width:42px;height:42px}.ranking-wrap .ranking-row>strong{font-size:22px}
+.ranking-personal{position:sticky;top:max(8px,env(safe-area-inset-top));z-index:1;background:var(--panel);border:1px solid #355365;border-radius:10px;padding:12px;flex-shrink:0}
+.personal-label{font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:8px}
+.personal-row{display:flex;align-items:center;gap:10px}.personal-rank{font-family:'Barlow Condensed',Impact,sans-serif;font-size:28px;line-height:1;color:var(--blue);flex-shrink:0}
+.personal-player{min-width:0;overflow-wrap:anywhere;font-size:14px}.personal-player small{display:block;margin-top:3px;font-size:11px;line-height:1.3;color:var(--muted)}
+.ranking-personal .link-button{margin:6px 0 0;padding:4px 0;min-height:32px}
 .ranking-pages[hidden]{display:none}
 .ranking-footer{margin-top:auto;display:grid;gap:6px}.ranking-footer .ranking-pages,.ranking-footer .link-button{margin:0}
 .ranking-footer .primary{min-height:44px;padding:10px}.ranking-footer .link-button{padding:6px}

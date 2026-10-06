@@ -39,8 +39,9 @@ document.querySelector('#status').textContent=failures.length?'ERRORES: '+JSON.s
    res.end(`<!doctype html><html lang="es-AR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><main id="app"></main><script type="module">
 import {results} from '/app.js';import {tiers} from '/tiers.js';
 const score=Math.min(125,Math.max(0,Math.trunc(Number(new URL(location.href).searchParams.get('score'))||0)));
+const rank=Math.max(1,Math.trunc(Number(new URL(location.href).searchParams.get('rank'))||1));
 const entries=tiers.slice().reverse().map((t,i)=>({id:i===0?'preview':'preview-'+i,nickname:i===0?'Vista de prueba':'Prueba '+(tiers.length-i),score:t.max}));
-results({phase:'done',lives:score===125?10:0,reason:score===125?'complete':'lives',score,nickname:'Vista de prueba',rank:1,bestScore:125,total:10,playerId:'preview',entries:entries.slice(0,5)});
+results({phase:'done',lives:score===125?10:0,reason:score===125?'complete':'lives',score,nickname:'Vista de prueba',rank,bestScore:125,total:10,playerId:'preview',entries:entries.slice(0,5)});
 document.title='Vista de prueba · Resultado del quiz';
 </script></body></html>`);return;
   }
