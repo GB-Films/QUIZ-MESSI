@@ -63,7 +63,9 @@ body{min-width:0}.ball{flex:0 0 20px;width:20px;text-align:center;font-size:17px
 .feedback-wrap .primary{min-height:44px;padding:10px 12px}
 .ranking-wrap{display:flex;flex-direction:column;gap:10px;height:auto;min-height:100vh;min-height:100dvh;max-height:none}.ranking-wrap h1{font-size:32px;margin:0;line-height:1.1}
 .ranking-wrap .ranking-note{margin:5px 0;font-size:12px}.ranking-wrap .ranking-range{margin:5px 0 0;font-size:10px}
-.ranking-wrap .ranking-row{min-height:56px;padding:6px 0;font-size:12px;gap:7px}.ranking-wrap .rank-tier{font-size:10px;line-height:1.2}
+.ranking-wrap>.ranking{display:flex;flex-direction:column;flex:1}
+.ranking-wrap .ranking-row{flex:1;min-height:68px;padding:10px 0;font-size:14px;gap:9px}.ranking-wrap .rank-tier{font-size:11px;line-height:1.2}
+.ranking-wrap .mini-avatar{width:42px;height:42px}.ranking-wrap .ranking-row>strong{font-size:22px}
 .ranking-pages[hidden]{display:none}
 .ranking-footer{margin-top:auto;display:grid;gap:6px}.ranking-footer .ranking-pages,.ranking-footer .link-button{margin:0}
 .ranking-footer .primary{min-height:44px;padding:10px}.ranking-footer .link-button{padding:6px}
