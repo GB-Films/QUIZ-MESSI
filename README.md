@@ -18,7 +18,7 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 | 98–104 | Messi de Wembley · Finalissima 2022 |
 | 105–110 | Messi de la remontada · festejo del gol ante Egipto en 2026 |
 | 111–123 | Messi campeón del mundo · besando la Copa en Qatar 2022 |
-| 124 | Messi de la última final · medalla de plata del Mundial 2026 |
+| 124 | Messi de la última final · foto con lágrimas y medalla de plata que publicó en Instagram tras el Mundial 2026 |
 | 125 | Messi Grido · nivel exclusivo para un pleno |
 
 Los doce niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa el abrazo de Messi y Maradona sin los demás integrantes del cuerpo técnico.
