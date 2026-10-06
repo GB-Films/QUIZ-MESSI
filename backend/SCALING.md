@@ -1,6 +1,6 @@
 # Capacidad y paso de Spark a Blaze
 
-Proyecto: `quiz-messi-8674d`. Objetivo acordado: un millón de jugadores acumulados, con Spark durante el arranque y cambio de plan cuando crezca el uso. Firestore Standard está creado en `southamerica-east1` con cuota gratuita y protección contra eliminación. Authentication y el servidor están activos; partidas y ranking ya se guardan en Firestore. No se ha activado facturación ni se ha demostrado capacidad de un millón de jugadores en producción.
+Proyecto: `quiz-messi-8674d`. Objetivo acordado: un millón de jugadores acumulados. El 6 de octubre de 2026 el usuario autorizó activar Blaze con la cuenta de facturación Gran Berta Films. Google rechazó la vinculación con `FAILED_PRECONDITION` y `QuotaFailure`: esa cuenta alcanzó su cuota de proyectos con facturación. El proyecto sigue en Spark, pendiente de que Google amplíe esa cuota o el usuario elija otra cuenta. Firestore Standard está creado en `southamerica-east1` con cuota gratuita y protección contra eliminación. Authentication y el servidor están activos; partidas y ranking ya se guardan en Firestore. No se ha demostrado capacidad de un millón de jugadores en producción.
 
 ## Guardado
 
@@ -14,7 +14,7 @@ Las reglas bloquean a los jugadores y admiten sólo la identidad dedicada `quiz-
 
 Firestore Standard incluye 20.000 escrituras, 50.000 lecturas diarias y 1 GiB de almacenamiento gratuito. Estas cifras son operaciones y espacio, no jugadores. Una primera partida con cinco aciertos y un error usa aproximadamente 16 escrituras en el motor completo; las repeticiones y las consultas agregadas cambian el consumo. Un millón de jugadores no cabe en un único día de cuota gratuita.
 
-Spark no se convierte automáticamente en Blaze. Al exceder cuotas, nuevas operaciones pueden fallar aunque los datos ya guardados se conserven. El seguimiento debe revisar lecturas, escrituras y almacenamiento del proyecto y avisar al 70% de la cuota o ante una tendencia que pronostique agotamiento antes de la siguiente revisión. Sólo pasar a Blaze cuando se cumpla la condición de crecimiento autorizada; si falta una cuenta de facturación o Google pide aceptar condiciones o introducir datos de pago, debe intervenir el usuario. No activar Blaze ahora.
+Spark no se convierte automáticamente en Blaze. Al exceder cuotas, nuevas operaciones pueden fallar aunque los datos ya guardados se conserven. El seguimiento debe revisar lecturas, escrituras y almacenamiento del proyecto y avisar al 70% de la cuota o ante una tendencia que pronostique agotamiento antes de la siguiente revisión. El cambio a Blaze ya está autorizado para Gran Berta Films, pero la cuota de vinculación lo bloquea. No usar otra cuenta ni desvincular proyectos existentes sin autorización. Si Google pide aceptar condiciones o introducir datos de pago, debe intervenir el usuario.
 
 La caché local de las instancias es una optimización: no reemplaza cuotas, control de abuso ni una caché distribuida. La posición exacta usa `count()` sobre un índice y aumenta su trabajo y costo al crecer el ranking. Antes de difusión masiva, medir esa consulta con datos representativos y pasar a un ranking calculado periódicamente o a un índice dedicado si se vuelve lento. Los valores del top y el total pueden tardar 15 segundos en actualizarse por la caché.
 
