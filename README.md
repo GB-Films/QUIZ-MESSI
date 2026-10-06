@@ -84,7 +84,7 @@ Estado del trabajo al 6 de octubre de 2026:
 
 Para seguir con Codex en otra computadora, abrir este repositorio y pedirle que lea este README y `backend/SCALING.md`. Iniciar sesión con la misma cuenta de Codex/Sites y la cuenta de Google del proyecto para administrar los recursos existentes. No crear otro proyecto de Firebase, otro Site ni volver a importar la copia anterior de los resultados.
 
-El servidor se publica por **Sites**, separado de GitHub Pages. Su ID es `appgprj_6ac470987bf081918291e55728c8818a`. La versión publicada del servidor es la 5, con fuente `7902d78c85038fb94e8c65ee07c5ada08413b4f7` en el repositorio administrado por Sites. La edición con diez vidas usa `RULES_VERSION=2`. Abrir primero esa fuente mediante el flujo de Sites antes de editar o publicar el servidor. Sincronizar desde este repositorio los archivos de `backend/` y `dist/questions.js` que se hayan modificado; construir con `npm run build` en el checkout del servicio. Las fotos y la interfaz actual están en este repositorio de GitHub Pages.
+El servidor se publica por **Sites**, separado de GitHub Pages. Su ID es `appgprj_6ac470987bf081918291e55728c8818a`. La versión publicada del servidor es la 6, con fuente `db6749936835e69a64442b8c35620923269619ea` en el repositorio administrado por Sites. La edición con diez vidas usa `RULES_VERSION=2`. Abrir primero esa fuente mediante el flujo de Sites antes de editar o publicar el servidor. Sincronizar desde este repositorio los archivos de `backend/` y `dist/questions.js` que se hayan modificado; construir con `npm run build` en el checkout del servicio. Las fotos y la interfaz actual están en este repositorio de GitHub Pages.
 
 `backend/hosting.sites.json` conserva el manifiesto de referencia del servicio, sin credenciales. El checkout de Sites utiliza ese manifiesto como `.openai/hosting.json`; la compilación del servidor se realiza allí para mantener los archivos del servidor fuera de la web de Pages.
 
@@ -119,7 +119,7 @@ Se usan veintidós imágenes existentes. Cada resultado enlaza la fuente de su f
 
 ## Preguntas
 
-El banco está en `dist/questions.js`. El Excel revisado está en `outputs/quiz-messi-20261006/Quiz-Messi-preguntas.xlsx`: conserva las modificaciones del usuario, completa cuatro preguntas vacías, reemplaza un duplicado sobre Sudáfrica 2010 y corrige respuestas, redacción y explicaciones. La columna «Fuente de revisión» enlaza las referencias de los cambios. La cifra de 125 preguntas usa los goles de la Selección mayor informados por la AFA, verificados el 6 de octubre de 2026. Es una edición fija, sin actualizaciones automáticas.
+El banco está en `dist/questions.js`. El Excel revisado está en `outputs/quiz-messi-20261006/Quiz-Messi-preguntas.xlsx`: conserva las modificaciones del usuario, completa cuatro preguntas vacías, reemplaza un duplicado sobre Sudáfrica 2010 y corrige respuestas, redacción y explicaciones. La primera pregunta trata del número 17 que Messi usó en su debut con Argentina Sub-20 ante Paraguay el 29 de junio de 2004; la web, el servidor y el Excel comparten esa pregunta. La columna «Fuente de revisión» enlaza las referencias de los cambios. La cifra de 125 preguntas usa los goles de la Selección mayor informados por la AFA, verificados el 6 de octubre de 2026. Es una edición fija, sin actualizaciones automáticas.
 
 Quiz independiente, sin afiliación oficial con Lionel Messi, la AFA o la FIFA.
 

@@ -11,15 +11,15 @@ export const questions = [
     "id": 68,
     "category": "La Albiceleste",
     "difficulty": 1,
-    "question": "¿Qué dos colores tiene la camiseta tradicional de Argentina?",
+    "question": "¿Con qué número de camiseta debutó Messi con Argentina, en la Sub-20?",
     "options": [
-      "Verde y amarillo",
-      "Azul y rojo",
-      "Celeste y blanco",
-      "Rojo y blanco"
+      "10",
+      "17",
+      "18",
+      "19"
     ],
-    "answer": "Celeste y blanco",
-    "explanation": "Messi defendió los colores celeste y blanco."
+    "answer": "17",
+    "explanation": "Messi debutó con la Sub-20 usando el 17, ante Paraguay el 29 de junio de 2004, en la cancha de Argentinos Juniors."
   },
   {
     "id": 67,

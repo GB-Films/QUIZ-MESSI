@@ -8,6 +8,7 @@ assert.equal(orderedQuestions.at(-1).id,50);
 assert.equal(orderedQuestions.filter(q=>q.acceptAll).length,1);
 assert.ok(orderedQuestions.at(-1).acceptAll);
 assert.equal(orderedQuestions[0].id,68);
+assert.equal(orderedQuestions[0].answer,'17');
 for (const q of questions) {
   assert.equal(q.options.length, 4, `Cuatro opciones: ${q.id}`);
   assert.equal(new Set(q.options).size, 4, `Opciones distintas: ${q.id}`);
