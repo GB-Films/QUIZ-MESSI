@@ -7,10 +7,15 @@ await Promise.all(tiers.map(t=>new Promise(resolve=>{const image=new Image();ima
 const failures=[];let checked=0;
 async function check(name){
  await new Promise(requestAnimationFrame);checked++;
+ const scrollableRanking=document.body.dataset.screen==='ranking';
  const outside=[...document.querySelectorAll('#app *')].filter(el=>{
-  const r=el.getBoundingClientRect();return r.width&&r.height&&(r.top<-.5||r.left<-.5||r.bottom>innerHeight+.5||r.right>innerWidth+.5);
+  const r=el.getBoundingClientRect();return r.width&&r.height&&(r.left<-.5||r.right>innerWidth+.5||(!scrollableRanking&&(r.top<-.5||r.bottom>innerHeight+.5)));
  }).map(el=>el.id||el.className||el.tagName);
- if(document.documentElement.scrollHeight>innerHeight+1||document.documentElement.scrollWidth>innerWidth+1||outside.length)failures.push({name,outside});
+ if((!scrollableRanking&&document.documentElement.scrollHeight>innerHeight+1)||document.documentElement.scrollWidth>innerWidth+1||outside.length)failures.push({name,outside});
+ if(scrollableRanking){
+  const list=document.querySelector('.ranking').getBoundingClientRect(),footer=document.querySelector('.ranking-footer').getBoundingClientRect();
+  if(list.bottom>footer.top+1)failures.push({name,overlap:'ranking/footer'});
+ }
  if(document.body.dataset.screen==='game'){
   const question=document.querySelector('.question-block').getBoundingClientRect(),options=document.querySelector('.options').getBoundingClientRect(),next=document.querySelector('#next').getBoundingClientRect();
   if(Math.min(question.right,options.right)>Math.max(question.left,options.left)+1&&Math.min(question.bottom,options.bottom)>Math.max(question.top,options.top)+1)failures.push({name,overlap:'question/options'});
@@ -40,13 +45,16 @@ while(!document.querySelector('#next-page'))await new Promise(requestAnimationFr
 await check('ranking');
 let seen=0,pages=0;const names=[];
 while(true){
+ const expected=Math.min(100,137-seen);
+ if(document.querySelectorAll('.ranking-row').length!==expected)failures.push({name:'la página del ranking cambia con el tamaño de pantalla',page:pages+1,expected});
  names.push(...[...document.querySelectorAll('.rank-name')].map(el=>el.firstChild.textContent));
  seen+=document.querySelectorAll('.ranking-row').length;pages++;
  const next=document.querySelector('#next-page');if(next.disabled)break;next.click();
  while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);
  await check('ranking página '+pages);
 }
-if(seen<37||new Set(names).size!==seen)failures.push({name:'ranking incompleto o duplicado',seen});
+if(seen!==137||new Set(names).size!==seen)failures.push({name:'ranking incompleto o duplicado',seen});
+if(pages!==2)failures.push({name:'cantidad de páginas distinta entre dispositivos',pages});
 if(pages>1){document.querySelector('#previous-page').click();while(!document.querySelector('#next-page'))await new Promise(requestAnimationFrame);await check('ranking página anterior');}
 document.querySelector('#back').click();await check('volver al menú');
 if(!document.querySelector('#nickname').disabled||document.querySelector('#start').textContent!=='Ver mi resultado')failures.push({name:'el menú permite reiniciar una partida terminada'});

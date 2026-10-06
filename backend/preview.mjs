@@ -30,7 +30,7 @@ document.querySelector('#status').textContent=failures.length?'ERRORES: '+JSON.s
   }
   if(url.pathname==='/screen-check.html'){
    // Datos ficticios sólo en la base en memoria de la vista previa.
-   for(let i=0;i<37;i++)sqlite.prepare('INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,score,elapsed_ms,updated_at) VALUES (?,?,?,?,?,?,?,?)').run('screen-check-'+i,'screen-check-'+String(i).padStart(2,'0'),'Prueba de pantalla '+i,3,'argentina-survival-1',Math.max(0,125-i*4),500,1900000000000+i);
+   for(let i=0;i<137;i++)sqlite.prepare('INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,score,elapsed_ms,updated_at) VALUES (?,?,?,?,?,?,?,?)').run('screen-check-'+i,'screen-check-'+String(i).padStart(3,'0'),'Prueba de pantalla '+i,3,'argentina-survival-1',Math.max(0,125-i*4),500,1900000000000+i);
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await readFile('backend/screen-check.html'));return;
   }
   if(url.pathname==='/connection-check.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await readFile('backend/connection-check.html'));return;}

@@ -2,9 +2,10 @@ import { difficultyLabels, orderedQuestions } from './questions.js?v=20261006-2'
 import { tiers, tierForScore } from './tiers.js?v=20261006-4';
 import { createPracticeGame } from './practice-game.js?v=20261006-2';
 const API=['127.0.0.1','localhost'].includes(location.hostname)?'/api':'https://messi-quiz-albiceleste.guidoboetsch.chatgpt.site/api';
+const RANKING_PAGE_SIZE=100;
 const PRACTICE=location.pathname.endsWith('/prueba.html'), practice=createPracticeGame();
 const app=document.querySelector('#app'), KEY=PRACTICE?'messi-practice-v1':(['localhost','127.0.0.1'].includes(location.hostname)&&location.pathname==='/connection-check.html'?'messi-connection-check':'messi-survival-v1');
-let saved=readSaved(), storageReady=true, game=null, timer=null, deadline=0, busy=false, rankingResize=null, rankingRefresh=null, rankingResume=null, rankingGeneration=0;
+let saved=readSaved(), storageReady=true, game=null, timer=null, deadline=0, busy=false, rankingRefresh=null, rankingResume=null, rankingGeneration=0;
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const aciertos=n=>`${n} ${n===1?'acierto':'aciertos'}`;
 function readSaved(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {};}}
@@ -13,7 +14,7 @@ function persist(){try{localStorage.setItem(KEY,JSON.stringify(saved));storageRe
 saved.playerToken ||= saved.pendingStart?.playerToken || crypto.randomUUID();persist();
 function balls(lives=10){return `<div class="lives" role="img" aria-label="${lives} de 10 vidas disponibles">${Array.from({length:10},(_,i)=>`<span class="ball ${i<lives?'':'spent'}" aria-hidden="true">⚽</span>`).join('')}<b>${lives}/10 VIDAS</b></div>`;}
 function stopTimer(){clearInterval(timer);timer=null;}
-function screen(mode,html){stopTimer();rankingGeneration++;clearInterval(rankingRefresh);rankingRefresh=null;rankingResume=null;if(rankingResize){window.removeEventListener('resize',rankingResize);rankingResize=null;}document.body.dataset.screen=mode;app.innerHTML=html;window.scrollTo(0,0);}
+function screen(mode,html){stopTimer();rankingGeneration++;clearInterval(rankingRefresh);rankingRefresh=null;rankingResume=null;document.body.dataset.screen=mode;app.innerHTML=html;window.scrollTo(0,0);}
 function portrait(score,cls='portrait'){const a=tierForScore(score);return `<img class="${cls}" src="./assets/levels/${a.image}" alt="${esc(a.alt)}" title="${esc(a.name)}" style="object-position:${a.position};${cls==='portrait'&&a.fit?'object-fit:'+a.fit:''}" draggable="false">`;}
 async function api(action,body,params=''){
  if(PRACTICE&&action!=='leaderboard')return practice(action,body);
@@ -148,21 +149,27 @@ function results(data){
  if(refresh&&!PRACTICE){const current=app.querySelector('.result-wrap');api('state',{gameToken:saved.gameToken}).then(updated=>{if(app.querySelector('.result-wrap')===current&&!updated.rankingPending)results(updated);}).catch(()=>{});}
  focusTitle();
 }
-function rankingPageSize(){return Math.max(1,Math.min(20,Math.floor((Math.min(window.innerHeight,900)-280)/84)));}
-async function showRanking(cursor=null,back=setup,previous=[]){
- screen('ranking','<section class="ranking-wrap"><p role="status">Buscando los récords…</p></section>');
+async function showRanking(cursor=null,back=setup,previous=[],preserveScroll=false){
+ if(!preserveScroll)screen('ranking','<section class="ranking-wrap"><p role="status">Buscando los récords…</p></section>');
  const generation=rankingGeneration;
  try{
-  const pageSize=rankingPageSize(),params=new URLSearchParams({limit:String(pageSize),fresh:'1',_t:String(Date.now())});if(cursor)params.set('cursor',cursor);
-  const data=await api('leaderboard',null,'?'+params);if(generation!==rankingGeneration)return;data.playerId=game?.playerId;
+  // El servidor admite bloques de 50; la pantalla reúne hasta 100 por página.
+  const params=new URLSearchParams({limit:'50',fresh:'1',_t:String(Date.now())});if(cursor)params.set('cursor',cursor);
+  const data=await api('leaderboard',null,'?'+params);if(generation!==rankingGeneration)return;
+  if(data.nextCursor&&data.entries.length<RANKING_PAGE_SIZE){
+   params.set('cursor',data.nextCursor);params.set('limit',String(Math.min(50,RANKING_PAGE_SIZE-data.entries.length)));
+   const continuation=await api('leaderboard',null,'?'+params);if(generation!==rankingGeneration)return;
+   data.entries.push(...continuation.entries);data.nextCursor=continuation.nextCursor;data.total=continuation.total;
+  }
+  data.playerId=game?.playerId;const scrollPosition=preserveScroll?window.scrollY:0;
   screen('ranking',`<section class="ranking-wrap"><header><h1 tabindex="-1">RANKING HISTÓRICO</h1><p class="ranking-note">Histórico · ${data.total} ${data.total===1?'participante':'participantes'}</p><p class="ranking-range" role="status">${data.entries.length?`PUESTOS ${data.startRank??1}–${(data.startRank??1)+data.entries.length-1}`:'TODAVÍA NO HAY RÉCORDS'}</p></header><ol class="ranking">${rankingRows(data)}</ol><footer class="ranking-footer"><nav class="ranking-pages" aria-label="Páginas del ranking"><button class="page-button" id="previous-page" ${previous.length?'':'disabled'}>Anterior</button><button class="page-button" id="next-page" ${data.nextCursor?'':'disabled'}>Siguiente</button></nav><button class="link-button" id="refresh-ranking">Actualizar ranking</button><button class="primary" id="back">Volver al menú principal</button></footer></section>`);
   app.querySelector('#back').onclick=back;
   app.querySelector('#next-page').onclick=()=>showRanking(data.nextCursor,back,[...previous,cursor]);
   app.querySelector('#previous-page').onclick=()=>showRanking(previous.at(-1),back,previous.slice(0,-1));
-  app.querySelector('#refresh-ranking').onclick=()=>showRanking(null,back);focusTitle();window.scrollTo(0,0);
-  rankingResize=()=>{if(rankingPageSize()!==pageSize)showRanking(cursor,back,previous);};window.addEventListener('resize',rankingResize);
-  rankingResume=()=>showRanking(null,back);
-  if(!cursor)rankingRefresh=setInterval(()=>{if(!document.hidden)showRanking(null,back);},15000);
+  app.querySelector('.ranking-pages').hidden=!previous.length&&!data.nextCursor;
+  app.querySelector('#refresh-ranking').onclick=()=>showRanking(null,back);if(!preserveScroll)focusTitle();window.scrollTo(0,scrollPosition);
+  rankingResume=()=>showRanking(cursor,back,previous,true);
+  if(!cursor)rankingRefresh=setInterval(()=>{if(!document.hidden)showRanking(cursor,back,previous,true);},15000);
  }
  catch(error){if(generation===rankingGeneration)errorScreen(error,()=>showRanking(cursor,back,previous));}
 }
