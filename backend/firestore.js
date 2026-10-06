@@ -1,3 +1,4 @@
+import { rankingPageResult } from './ranking-page.js';
 // Firebase credentials stay on the server. The browser only uses the quiz API.
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 let cachedToken;
@@ -94,7 +95,13 @@ export function createFirebaseRanking(env, version) {
     });
   }
   return {
-    async leaderboard() {
+    async leaderboard(page=null) {
+      if (page) return cachedRead(`${parent}:page:${page.limit}:${page.after}:${page.offset}`,ttl,async()=>{
+        const [rows,total]=await Promise.all([
+          request(`${parent}:runQuery`,{structuredQuery:query({orderBy:[{field:{fieldPath:'orderKey'},direction:'ASCENDING'}],limit:page.limit+1,...(page.after?{startAt:{values:[{stringValue:page.after}],before:false}}:{})})}),count()
+        ]);
+        return rankingPageResult(rows.filter(row=>row.document).map(row=>unpack(row.document)),total,page);
+      });
       return cachedRead(`${parent}:leaderboard`,ttl,async()=>{
         const [rows, total] = await Promise.all([
           request(`${parent}:runQuery`, {structuredQuery: query({orderBy: [{field: {fieldPath: 'orderKey'}, direction: 'ASCENDING'}], limit: 5})}), count()

@@ -49,12 +49,14 @@ globalThis.fetch = async (input, options) => {
     return json({writeResults:[{updateTime:`revision-${revision}`}]});
   }
   const prefix = path.split(':')[0] + '/players/';
-  const entries = [...documents.values()].filter(doc=>doc.name.startsWith(prefix));
+  let entries = [...documents.values()].filter(doc=>doc.name.startsWith(prefix));
   if (path.endsWith(':runQuery')) {
     queryCalls++;
-    assert.equal(body.structuredQuery.limit,5);
+    assert.ok(body.structuredQuery.limit>=2&&body.structuredQuery.limit<=51);
+    const cursor=body.structuredQuery.startAt;
+    if(cursor){assert.equal(cursor.before,false);entries=entries.filter(doc=>entryData(doc).orderKey>cursor.values[0].stringValue);}
     entries.sort((a,b)=>entryData(a).orderKey.localeCompare(entryData(b).orderKey));
-    return json(entries.slice(0,5).map(document=>({document})));
+    return json(entries.slice(0,body.structuredQuery.limit).map(document=>({document})));
   }
   assert.ok(path.endsWith(':runAggregationQuery'));
   const filter = body.structuredAggregationQuery.structuredQuery.where?.fieldFilter;
@@ -145,12 +147,34 @@ sqlite.exec(await readFile('drizzle/0001_ten_lives.sql','utf8'));
       assert.ok(feedbacks.every(r=>r.status===200&&r.lives===9-round));
     }
     assert.equal((await createFirebaseRanking(env,VERSION).leaderboard()).total,totalBefore+100);
+    const finishedIds=new Set();
+    for(const [i,g] of games.entries()){
+      const result=await cloudPost('state',{gameToken:g.gameToken});
+      assert.equal(result.phase,'done');assert.equal(result.reason,'lives');assert.equal(result.resultSaved,true);assert.equal(result.score,0);
+      const record=entryData(documents.get(`projects/demo-messi/databases/(default)/documents/quizRankings/${VERSION}/players/${result.playerId}`));
+      assert.equal(record.nickname,'Carga '+i);assert.equal(record.score,0);finishedIds.add(result.playerId);
+    }
+    assert.equal(finishedIds.size,100,'Each eliminated player has a distinct saved public record, including zero scores');
+    let cursor=null;const all=[];
+    do{
+      const params=new URLSearchParams({limit:'17'});if(cursor)params.set('cursor',cursor);
+      const response=await worker.fetch(new Request(`https://quiz.test/api/leaderboard?${params}`),cloudEnv);
+      assert.equal(response.status,200);
+      const page=await response.json();assert.equal(page.startRank,all.length+1);assert.ok(page.entries.length<=17);all.push(...page.entries);cursor=page.nextCursor;
+    }while(cursor);
+    assert.equal(all.length,totalBefore+100);assert.equal(new Set(all.map(r=>r.id)).size,all.length);
+    assert.ok([...finishedIds].every(id=>all.some(r=>r.id===id)),'Anonymous visitors can reach every eliminated player through the public ranking');
+    assert.ok(all.every(r=>Object.keys(r).sort().join(',')==='avatar,elapsedMs,id,nickname,score'));
+    for(const invalid of ['limit=0','limit=51','cursor=invalid','limit=1.5']){
+      assert.equal((await worker.fetch(new Request(`https://quiz.test/api/leaderboard?${invalid}`),cloudEnv)).status,400);
+    }
     const callsBefore = queryCalls;
     const cachedEnv = {...env,FIREBASE_CACHE_MS:'15000'};
     await Promise.all(Array.from({length:100},()=>createFirebaseRanking(cachedEnv,VERSION).leaderboard()));
     assert.equal(queryCalls,callsBefore+1,'100 simultaneous leaderboard reads share one query in the server instance');
     console.log('Partidas en Firebase verificadas sin D1: guardado atómico, inicios y respuestas simultáneas sin duplicados, reloj y resultado visible ante cortes del ranking.');
     console.log('Carga simulada verificada: 100 jugadores concurrentes sin pérdidas y 100 consultas de ranking agrupadas en una consulta por instancia. No constituye una prueba de capacidad de la nube.');
+    console.log('Ranking público completo verificado: todos los jugadores eliminados, incluidos cero aciertos, accesibles por páginas sin duplicados ni campos privados.');
   } finally {Date.now=actualNow;}
   const firestoreMock=globalThis.fetch;
   let refreshCalls=0;

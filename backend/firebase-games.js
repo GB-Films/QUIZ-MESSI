@@ -49,7 +49,7 @@ export function createFirebaseGames(env) {
     return writes;
   }
   return {
-    leaderboard: () => ranking.leaderboard(),
+    leaderboard: page => ranking.leaderboard(page),
     async start(body,now) {
       const nickname = cleanName(body.nickname);
       if (!Number.isInteger(body.avatar)||body.avatar<1||body.avatar>4) fail('Elegí un personaje.');

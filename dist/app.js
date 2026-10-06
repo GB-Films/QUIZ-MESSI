@@ -13,10 +13,10 @@ function balls(lives=10){return `<div class="lives" role="img" aria-label="${liv
 function stopTimer(){clearInterval(timer);timer=null;}
 function screen(mode,html){stopTimer();document.body.dataset.screen=mode;app.innerHTML=html;}
 function portrait(score,cls='portrait'){const a=tierForScore(score);return `<img class="${cls}" src="./assets/levels/${a.image}" alt="${esc(a.alt)}" title="${esc(a.name)}" style="object-position:${a.position};${cls==='portrait'&&a.fit?'object-fit:'+a.fit:''}" draggable="false">`;}
-async function api(action,body){
+async function api(action,body,params=''){
  const sent=performance.now(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
  try{
-  const response=await fetch(`${API}/${action}`,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:controller.signal});
+  const response=await fetch(`${API}/${action}${params}`,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:controller.signal});
   const data=await response.json();if(!response.ok)throw new Error(data.error||'No se pudo conectar con el ranking.');
   if(action!=='leaderboard'&&data.rulesVersion!==2)throw new Error('Estamos actualizando el quiz. Reconectá en un momento para jugar con tus diez vidas.');
   if(typeof data.remainingMs==='number')data.remainingMs=Math.max(0,data.remainingMs-(performance.now()-sent)/2);
@@ -41,7 +41,7 @@ function setup(){
  try{const data=await api('start',saved.pendingStart);saved={...saved,nickname,playerToken:data.playerToken,gameToken:data.gameToken};delete saved.pendingStart;persist();game=data;showGame(data);focusTitle();}
   catch(error){app.querySelector('#setup-error').textContent=error.message;button.disabled=false;button.textContent='Estoy listo. Vamos.';}finally{busy=false;}
  };
- app.querySelector('#show-ranking').onclick=showRanking;
+ app.querySelector('#show-ranking').onclick=()=>showRanking();
 }
 function showGame(data){
  game=data;if(data.phase==='done')return results(data);if(data.phase==='ready')return readyScreen(data);
@@ -80,7 +80,7 @@ async function next(){
  try{const data=await api('next',{gameToken:saved.gameToken});busy=false;showGame(data);focusTitle();}
  catch(error){busy=false;app.querySelector('#status').textContent=error.message;button.disabled=false;button.textContent='Reconectar';button.onclick=restore;}
 }
-function rankingRows(data){return data.entries.length?data.entries.map((entry,i)=>`<li class="ranking-row ${entry.id===data.playerId?'you':''}"><b class="rank-position">${i+1}</b>${portrait(entry.score,'mini-avatar')}<span class="rank-name">${esc(entry.nickname)}${entry.id===data.playerId?' <small>VOS</small>':''}<span class="rank-tier">${tierForScore(entry.score).name}</span></span><strong>${entry.score}<small> ACIERTOS</small></strong></li>`).join(''):'<li class="empty-ranking">La cancha está vacía. ¡Sé el primero!</li>';}
+function rankingRows(data){return data.entries.length?data.entries.map((entry,i)=>`<li class="ranking-row ${entry.id===data.playerId?'you':''}"><b class="rank-position">${(data.startRank??1)+i}</b>${portrait(entry.score,'mini-avatar')}<span class="rank-name">${esc(entry.nickname)}${entry.id===data.playerId?' <small>VOS</small>':''}<span class="rank-tier">${tierForScore(entry.score).name}</span></span><strong>${entry.score}<small> ACIERTOS</small></strong></li>`).join(''):'<li class="empty-ranking">No hay récords en esta página.</li>';}
 function results(data){
  busy=false;game=data;
  const tier=tierForScore(data.score),level=tiers.indexOf(tier),nextTier=tiers[level+1];
@@ -89,7 +89,8 @@ function results(data){
  <div class="your-rank"><strong>${data.rankingPending?'TU RESULTADO ESTÁ GUARDADO':`#${data.rank} EN EL RANKING GLOBAL`}</strong><span>TU RÉCORD: ${aciertos(data.bestScore).toUpperCase()}${data.total===null?'':` · ${data.total} ${data.total===1?'JUGADOR':'JUGADORES'}`}</span></div>
  ${nextTier?`<p class="next-tier">${aciertos(nextTier.min-data.score)} más y eras <b>${nextTier.name}</b>.</p>`:'<p class="next-tier">Llegaste al último nivel. La heladería es tuya.</p>'}
  <div class="ranking-heading"><h3>LOS 5 DEL 10</h3><span>RÉCORDS GLOBALES</span></div>${data.rankingPending?'<p class="ranking-note">Tu partida quedó guardada. El ranking está tardando en responder.</p><button class="link-button" id="refresh-result">Actualizar mi posición</button>':`<ol class="ranking">${rankingRows(data)}</ol><p class="ranking-note">Tu posición corresponde a tu mejor partida. Empates: menor tiempo de respuesta.</p>`}
- <p class="closed-challenge">${data.reason==='complete'?'Completaste el quiz. Tu resultado quedó guardado.':'0 vidas disponibles. No quedan chances para volver a jugar.'}</p><button class="link-button" id="share">Compartir mi resultado</button><p class="share-status" id="share-status" aria-live="polite"></p><a class="photo-credit" href="${tier.source}" target="_blank" rel="noopener">Fuente de la foto</a></section>`);
+ <button class="link-button" id="full-ranking">Ver ranking global completo</button><p class="closed-challenge">${data.reason==='complete'?'Completaste el quiz. Tu resultado quedó guardado.':'0 vidas disponibles. No quedan chances para volver a jugar.'}</p><button class="link-button" id="share">Compartir mi resultado</button><p class="share-status" id="share-status" aria-live="polite"></p><a class="photo-credit" href="${tier.source}" target="_blank" rel="noopener">Fuente de la foto</a></section>`);
+ app.querySelector('#full-ranking').onclick=()=>showRanking(null,()=>results(data));
  const refresh=app.querySelector('#refresh-result');if(refresh)refresh.onclick=async()=>{refresh.disabled=true;try{results(await api('state',{gameToken:saved.gameToken}));}catch{refresh.disabled=false;refresh.textContent='Volver a actualizar mi posición';}};
  app.querySelector('#share').onclick=async()=>{
   const text=`Soy ${tier.name}: ${data.score}/125 aciertos en el quiz de Messi 🇦🇷.${data.rankingPending?'':` Mi récord está #${data.rank} en el ranking global.`} Diez vidas. 10 segundos por pregunta. ¿Qué Messi sos vos?`;
@@ -97,10 +98,18 @@ function results(data){
   catch(error){if(error.name!=='AbortError')app.querySelector('#share-status').textContent='No se pudo compartir. Copiá el enlace de esta página.';}
  };focusTitle();
 }
-async function showRanking(){
+async function showRanking(cursor=null,back=setup,previous=[]){
  screen('ranking','<section class="ranking-wrap"><p role="status">Buscando los récords…</p></section>');
- try{const data=await api('leaderboard');screen('ranking',`<section class="ranking-wrap"><p class="eyebrow">EL DESAFÍO DEL 10</p><h1 tabindex="-1">RANKING GLOBAL</h1><p class="ranking-note">Los mejores resultados de ${data.total} ${data.total===1?'jugador':'jugadores'}.</p><ol class="ranking">${rankingRows(data)}</ol><button class="primary" id="back">Volver y prepararme</button></section>`);app.querySelector('#back').onclick=setup;focusTitle();}
- catch(error){errorScreen(error,showRanking);}
+ try{
+  const params=new URLSearchParams({limit:'20'});if(cursor)params.set('cursor',cursor);
+  const data=await api('leaderboard',null,'?'+params);data.playerId=game?.playerId;
+  screen('ranking',`<section class="ranking-wrap"><p class="eyebrow">EL DESAFÍO DEL 10</p><h1 tabindex="-1">RANKING GLOBAL</h1><p class="ranking-note">${data.total} ${data.total===1?'jugador':'jugadores'} · Un récord por jugador. Más aciertos primero; en un empate, menor tiempo.</p><p class="ranking-range" role="status">${data.entries.length?`PUESTOS ${data.startRank??1}–${(data.startRank??1)+data.entries.length-1}`:'TODAVÍA NO HAY RÉCORDS'}</p><ol class="ranking">${rankingRows(data)}</ol><nav class="ranking-pages" aria-label="Páginas del ranking"><button class="page-button" id="previous-page" ${previous.length?'':'disabled'}>Anterior</button><button class="page-button" id="next-page" ${data.nextCursor?'':'disabled'}>Siguiente</button></nav><p class="ranking-note">Los nuevos récords pueden tardar hasta 15 segundos en aparecer. Los puestos cambian cuando se suman jugadores.</p><button class="link-button" id="refresh-ranking">Actualizar ranking desde el comienzo</button><button class="primary" id="back">${game?.phase==='done'?'Volver a mi resultado':'Volver y prepararme'}</button></section>`);
+  app.querySelector('#back').onclick=back;
+  app.querySelector('#next-page').onclick=()=>showRanking(data.nextCursor,back,[...previous,cursor]);
+  app.querySelector('#previous-page').onclick=()=>showRanking(previous.at(-1),back,previous.slice(0,-1));
+  app.querySelector('#refresh-ranking').onclick=()=>showRanking(null,back);focusTitle();window.scrollTo(0,0);
+ }
+ catch(error){errorScreen(error,()=>showRanking(cursor,back,previous));}
 }
 function errorScreen(error,retry){screen('error',`<section class="ranking-wrap"><h1 tabindex="-1">VOLVAMOS A CONECTAR</h1><p class="hook" role="alert">${esc(error.message)}</p><button class="primary" id="retry">Reconectar</button><button class="link-button" id="home">Ir al inicio</button></section>`);app.querySelector('#retry').onclick=retry;app.querySelector('#home').onclick=()=>{delete saved.gameToken;persist();setup();};}
 async function restore(){busy=false;screen('loading','<section class="ranking-wrap"><p role="status">Recuperando tu partida…</p></section>');try{showGame(await api('state',{gameToken:saved.gameToken}));}catch(error){if(error.message.includes('El quiz se actualizó')){delete saved.gameToken;persist();setup();}else errorScreen(error,restore);}}

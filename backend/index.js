@@ -1,13 +1,22 @@
 import { orderedQuestions } from '../dist/questions.js';
 import { firebaseEnabled, createFirebaseRanking } from './firestore.js';
 import { createFirebaseGames } from './firebase-games.js';
+import { parseRankingPage, rankingPageResult } from './ranking-page.js';
 import { VERSION, TIME, RULES_VERSION, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
 
 export { VERSION } from './quiz-rules.js';
 const ORIGINS = new Set(['https://gb-films.github.io','http://127.0.0.1:4173','http://localhost:4173']);
 const query = (db, sql, values = []) => db.prepare(sql).bind(...values);
-async function leaderboard(db, firebase) {
-  if (firebase) return firebase.leaderboard();
+async function leaderboard(db, firebase, page=null) {
+  if (firebase) return firebase.leaderboard(page);
+  if(page){
+    const values=[VERSION];let after='';
+    if(page.after){const [inverseScore,elapsed,updated,id]=page.after.split(':');after=' AND (125-score,elapsed_ms,updated_at,public_id) > (?,?,?,?)';values.push(Number(inverseScore),Number(elapsed),Number(updated),id);}
+    values.push(page.limit+1);
+    const {results}=await query(db,`SELECT public_id AS id,nickname,avatar,score,elapsed_ms AS elapsedMs,updated_at AS updatedAt FROM quiz_players WHERE version=? AND score>=0${after} ORDER BY score DESC,elapsed_ms ASC,updated_at ASC,public_id ASC LIMIT ?`,values).all();
+    const count=await query(db,'SELECT COUNT(*) AS n FROM quiz_players WHERE version=? AND score>=0',[VERSION]).first();
+    return rankingPageResult(results,count.n,page);
+  }
   const {results} = await query(db, 'SELECT public_id AS id, nickname, avatar, score, elapsed_ms AS elapsedMs FROM quiz_players WHERE version=? AND score>=0 ORDER BY score DESC, elapsed_ms ASC, updated_at ASC LIMIT 5', [VERSION]).all();
   const count = await query(db,'SELECT COUNT(*) AS n FROM quiz_players WHERE version=? AND score>=0',[VERSION]).first();
   return {entries:results,total:count.n};
@@ -89,7 +98,7 @@ export default {
       const cloudGames=env.FIREBASE_GAMES_ENABLED==='true'?createFirebaseGames(env):null;
       if(!cloudGames&&!env.DB) fail('El ranking no está disponible. Intentá nuevamente.',503);
       const firebase=firebaseEnabled(env)?createFirebaseRanking(env,VERSION):null;
-      if(request.method==='GET'&&url.pathname==='/api/leaderboard') return json(await (cloudGames?cloudGames.leaderboard():leaderboard(env.DB,firebase)));
+      if(request.method==='GET'&&url.pathname==='/api/leaderboard') {const page=parseRankingPage(url.searchParams);return json(await (cloudGames?cloudGames.leaderboard(page):leaderboard(env.DB,firebase,page)));}
       if(request.method!=='POST') return json({error:'No encontrado.'},404);
       if(!request.headers.get('Content-Type')?.includes('application/json')) fail('Formato inválido.',415);
       if(Number(request.headers.get('Content-Length')||0)>2048) fail('Solicitud demasiado grande.',413);
