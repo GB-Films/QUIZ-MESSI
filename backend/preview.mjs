@@ -31,7 +31,7 @@ document.querySelector('#status').textContent=failures.length?'ERRORES: '+JSON.s
    res.end(`<!doctype html><html lang="es-AR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><main id="app"></main><script type="module">
 import {results} from '/app.js';import {tiers} from '/tiers.js';
 const score=Math.min(125,Math.max(0,Math.trunc(Number(new URL(location.href).searchParams.get('score'))||0)));
-const entries=tiers.slice().reverse().map((t,i)=>({id:i===0?'preview':'preview-'+i,nickname:i===0?'Vista de prueba':'Prueba '+(10-i),score:t.max}));
+const entries=tiers.slice().reverse().map((t,i)=>({id:i===0?'preview':'preview-'+i,nickname:i===0?'Vista de prueba':'Prueba '+(tiers.length-i),score:t.max}));
 results({phase:'done',reason:score===125?'complete':'wrong',score,nickname:'Vista de prueba',rank:1,bestScore:125,total:10,playerId:'preview',entries:entries.slice(0,5)});
 </script></body></html>`);return;
   }

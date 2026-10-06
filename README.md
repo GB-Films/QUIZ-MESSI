@@ -11,15 +11,17 @@ Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida de
 | 0–13 | Messi en el banco · Alemania 2006 |
 | 14–27 | Messi debutante · primer gol mundialista 2006 |
 | 28–41 | Messi olímpico · Beijing 2008 |
-| 42–55 | Messi capitán · Sudáfrica 2010 |
+| 42–55 | Messi con el Diego · abrazo tras la eliminación en Sudáfrica 2010 |
 | 56–69 | Messi finalista · Brasil 2014 |
 | 70–83 | Messi salvador · Quito 2017 |
 | 84–97 | Messi de América · 2021 |
-| 98–110 | Messi de Wembley · Finalissima 2022 |
-| 111–124 | Messi campeón del mundo · besando la Copa en Qatar 2022 |
+| 98–104 | Messi de Wembley · Finalissima 2022 |
+| 105–110 | Messi de la remontada · festejo del gol ante Egipto en 2026 |
+| 111–123 | Messi campeón del mundo · besando la Copa en Qatar 2022 |
+| 124 | Messi de la última final · medalla de plata del Mundial 2026 |
 | 125 | Messi Grido · nivel exclusivo para un pleno |
 
-Los niveles se definen en `dist/tiers.js`, con sus diez fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto.
+Los doce niveles se definen en `dist/tiers.js`, con sus fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto. La categoría de 2010 usa el abrazo de Messi y Maradona sin los demás integrantes del cuerpo técnico.
 
 El ranking usa almacenamiento compartido en el servidor, separado de GitHub Pages. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 
@@ -53,7 +55,7 @@ Para generar nuevas migraciones se instalan las herramientas con `npm install` y
 
 ## Fotografías
 
-Se usan diez fotografías existentes. Cada resultado enlaza la fuente de su foto; el inicio reúne las diez referencias. Fuentes: TyC Sports, TNT Sports, C5N, La Nación, Meridiano/AS, O Globo, AS, El Destape, beIN Sports e iProfesional. Créditos fotográficos en las páginas enlazadas. La imagen final es la foto de Messi joven en Grido, no la de un parecido a Messi. Las fotografías no fueron generadas ni se afirma propiedad o licencia comercial sobre ellas.
+Se usan doce fotografías existentes. Cada resultado enlaza la fuente de su foto; el inicio reúne las doce referencias. Fuentes: TyC Sports, TNT Sports, C5N, La Capital, Meridiano/AS, O Globo, AS, El Destape, TN/Reuters, beIN Sports, Infobae e iProfesional. Créditos fotográficos en las páginas enlazadas. La imagen final es la foto de Messi joven en Grido, no la de un parecido a Messi. Las fotografías no fueron generadas ni se afirma propiedad o licencia comercial sobre ellas.
 
 ## Preguntas
 
