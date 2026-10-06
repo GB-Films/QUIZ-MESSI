@@ -1,0 +1,6 @@
+{
+  "name": "messi-quiz",
+  "private": true,
+  "type": "module",
+  "scripts": { "check": "node verify.mjs", "start": "node preview.mjs" }
+}
