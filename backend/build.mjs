@@ -1,0 +1,10 @@
+import { readFile, writeFile, mkdir, cp } from 'node:fs/promises';
+import { orderedQuestions } from '../dist/questions.js';
+const source=await readFile('backend/index.js','utf8');
+const bundle=source.replace("import { orderedQuestions } from '../dist/questions.js';",`const orderedQuestions = ${JSON.stringify(orderedQuestions)};`);
+await mkdir('dist/server',{recursive:true});
+await mkdir('dist/.openai',{recursive:true});
+await writeFile('dist/server/index.js',bundle);
+await cp('.openai/hosting.json','dist/.openai/hosting.json');
+await cp('drizzle','dist/.openai/drizzle',{recursive:true});
+console.log('Worker del ranking y migraciones preparados.');
