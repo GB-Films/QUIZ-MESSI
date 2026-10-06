@@ -12,11 +12,17 @@ export async function gameScenarios(post,advance) {
   const first={gameToken:game.gameToken,questionId:game.question.id,choice:0,value:orderedQuestions[0].answer,score:125,lives:999};
   const goals=await Promise.all(Array.from({length:12},()=>post('answer',first)));
   assert.ok(goals.every(g=>g.status===200&&g.score===1&&g.lives===10&&g.correct));
+  advance(120000);
+  const paused=await post('state',{gameToken:game.gameToken});
+  assert.equal(paused.phase,'ready');assert.equal(paused.score,1);assert.equal(paused.lives,10);assert.equal(paused.answered,1);
   const second=await post('next',{gameToken:game.gameToken});advance(250);
+  assert.equal(second.remainingMs,10000);
   const nextRetry=await post('next',{gameToken:game.gameToken});assert.equal(nextRetry.number,2);assert.equal(nextRetry.remainingMs,second.remainingMs-250);
   const bad={gameToken:game.gameToken,questionId:second.question.id,choice:0,value:second.question.options.find(v=>v!==orderedQuestions[1].answer)};
   const errors=await Promise.all(Array.from({length:12},()=>post('answer',bad)));
   assert.ok(errors.every(g=>g.status===200&&g.score===1&&g.lives===9&&!g.correct&&g.answer===orderedQuestions[1].answer));
+  advance(120000);
+  assert.equal((await post('state',{gameToken:game.gameToken})).phase,'ready');
   assert.equal((await post('state',{gameToken:game.gameToken})).lives,9);
   const resume=await post('start',{...identity,nickname:'Otro nombre',requestId:crypto.randomUUID()});assert.equal(resume.gameToken,game.gameToken);assert.equal(resume.phase,'ready');assert.equal(resume.lives,9);
   const third=await post('next',{gameToken:game.gameToken});assert.equal(third.number,3);advance(10001);

@@ -1,4 +1,4 @@
-import { difficultyLabels } from './questions.js';
+import { difficultyLabels, orderedQuestions } from './questions.js';
 import { tiers, tierForScore } from './tiers.js';
 const API=['127.0.0.1','localhost'].includes(location.hostname)?'/api':'https://messi-quiz-albiceleste.guidoboetsch.chatgpt.site/api';
 const app=document.querySelector('#app'), KEY='messi-survival-v1';
@@ -46,13 +46,17 @@ function setup(){
 function showGame(data){
  game=data;if(data.phase==='done')return results(data);if(data.phase==='ready')return readyScreen(data);
  const q=data.question;
- screen('game',`<section class="game-wrap"><header class="game-top"><span>PREGUNTA <b>${data.number} / ${data.total}</b></span><span class="life"><b>${data.lives??10} VIDAS</b></span></header>
+ saved.review={number:data.number,question:q,choice:null};persist();
+ questionScreen(data,q);
+ if(!q.final){deadline=performance.now()+data.remainingMs;tick();timer=setInterval(tick,80);}
+}
+function questionScreen(data,q){
+ screen('game',`<section class="game-wrap" data-question-id="${esc(q.id)}"><header class="game-top"><span>PREGUNTA <b>${data.number} / ${data.total}</b></span><span class="life"><b>${data.lives??10} VIDAS</b></span></header>
  ${balls(data.lives??10)}<div class="progress"><span style="width:${(data.number-1)/data.total*100}%"></span></div><div class="game-meta"><span>${esc(difficultyLabels[q.difficulty-1])}</span><span id="score">${aciertos(data.score)}</span></div>
  <div class="question-block">${q.final?'<p class="final-hint">LA ÚLTIMA VA POR AMOR AL 10 · TODAS SON CORRECTAS</p>':'<div class="clock" role="timer" aria-label="Tiempo restante"><b id="seconds">10</b><small>SEGUNDOS</small></div>'}<h2 tabindex="-1">${esc(q.text)}</h2></div>
  <div class="options">${q.options.map((option,i)=>`<button class="option" data-choice="${i}"><span class="letter" aria-hidden="true">${'ABCD'[i]}</span><span>${esc(option)}</span></button>`).join('')}</div>
  <footer class="game-bottom"><p id="status" aria-live="polite">Una respuesta. Jugátela.</p><button class="primary" id="next" disabled>Siguiente pregunta</button></footer></section>`);
  app.querySelectorAll('[data-choice]').forEach(button=>button.onclick=()=>answer(Number(button.dataset.choice)));app.querySelector('#next').onclick=next;
- if(!q.final){deadline=performance.now()+data.remainingMs;tick();timer=setInterval(tick,80);}
 }
 function tick(){
  if(!game||game.phase!=='active'||game.question?.final||busy)return;
@@ -61,18 +65,42 @@ function tick(){
 }
 async function answer(choice){
  if(busy||game?.phase!=='active')return;busy=true;stopTimer();const current=game;
+ saved.review={number:current.number,question:current.question,choice};persist();
  app.querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;if(Number(b.dataset.choice)===choice)b.classList.add('chosen');});
  const status=app.querySelector('#status');status.textContent=choice===null?'Se acabó el tiempo…':'Comprobando tu respuesta…';
  const payload={gameToken:saved.gameToken,questionId:current.question.id,choice,value:choice===null?null:current.question.options[choice]};
  const send=async()=>{try{
-  const data=await api('answer',payload);busy=false;showGame(data);focusTitle();
+  const data=await api('answer',payload);busy=false;if(data.phase==='active')showGame(data);else readyScreen(data);
  }catch(error){busy=false;status.textContent=error.message;const button=app.querySelector('#next');button.textContent='Reconectar';button.disabled=false;button.onclick=()=>{if(busy)return;busy=true;button.disabled=true;send();};}};
  await send();
 }
 function readyScreen(data){
- game=data;const wrong=!data.correct;
- screen('feedback',`<section class="feedback-wrap"><p class="eyebrow">PREGUNTA ${data.answered} / ${data.total}</p>${balls(data.lives)}<h2 tabindex="-1" class="${wrong?'miss':'success'}">${wrong?(data.lastReason==='timeout'?'SE ACABÓ EL TIEMPO':'PERDISTE UNA VIDA'):'¡GOLAZO!'}</h2><p class="feedback-label">${wrong?'LA RESPUESTA CORRECTA ERA':'RESPUESTA CORRECTA'}</p><p class="feedback-answer">${esc(data.answer)}</p><p class="feedback-explanation">${esc(data.explanation)}</p><p class="feedback-score">${aciertos(data.score)} · ${data.lives} ${data.lives===1?'vida disponible':'vidas disponibles'}</p><p id="status" aria-live="polite">${wrong?'Tu recorrido sigue desde acá.':'Concentrate para la próxima.'}</p><button class="primary" id="next">Continuar con la siguiente pregunta</button></section>`);
- app.querySelector('#next').onclick=next;
+ stopTimer();game=data;
+ const item=orderedQuestions[data.answered-1],review=saved.review;
+ if(!item)return results(data);
+ // Keep the displayed shuffle and choice across retries and a reload while paused.
+ const matches=review?.number===data.answered&&review.question?.id===item.id&&Array.isArray(review.question.options)&&review.question.options.length===4&&new Set(review.question.options).size===4&&review.question.options.every(option=>item.options.includes(option));
+ const q={id:item.id,text:item.question,difficulty:item.difficulty,options:matches?review.question.options:item.options,final:!!item.acceptAll};
+ const choice=matches&&Number.isInteger(review.choice)?review.choice:null;
+ if(app.querySelector('.game-wrap')?.dataset.questionId!==String(q.id))questionScreen({...data,number:data.answered,total:orderedQuestions.length},q);
+ const wrap=app.querySelector('.game-wrap');wrap.classList.add('answered');
+ app.querySelector('.life b').textContent=`${data.lives} VIDAS`;
+ app.querySelector('.lives').outerHTML=balls(data.lives);
+ app.querySelector('#score').textContent=aciertos(data.score);
+ app.querySelector('.progress span').style.width=`${data.answered/orderedQuestions.length*100}%`;
+ app.querySelectorAll('[data-choice]').forEach(button=>{
+  const index=Number(button.dataset.choice),selected=index===choice;
+  const correct=selected?data.correct:(q.final||q.options[index]===data.answer);
+  button.disabled=true;button.classList.remove('chosen','correct','incorrect');
+  button.classList.toggle('chosen',selected);button.classList.toggle('correct',correct);button.classList.toggle('incorrect',selected&&!data.correct);
+  button.setAttribute('aria-label',`${'ABCD'[index]}. ${q.options[index]}${selected?' · Tu respuesta':''}${correct?' · Correcta':selected?' · Incorrecta':''}`);
+ });
+ const clock=app.querySelector('.clock');if(clock){clock.classList.remove('urgent');clock.classList.add('paused');clock.setAttribute('role','status');clock.setAttribute('aria-label','Reloj detenido hasta la siguiente pregunta');clock.innerHTML='<b>PAUSA</b><small>AVANZÁ CUANDO QUIERAS</small>';}
+ const status=app.querySelector('#status');status.className=data.correct?'success':'miss';
+ status.textContent=data.correct?'¡Correcto!':`${data.lastReason==='timeout'?'Tiempo agotado':'Incorrecto'}. La correcta era: ${data.answer}.`;
+ app.querySelector('.answer-explanation')?.remove();
+ status.insertAdjacentHTML('afterend',`<details class="answer-explanation"><summary>Ver explicación</summary><p>${esc(data.explanation)}</p></details>`);
+ const button=app.querySelector('#next');button.disabled=false;button.textContent=data.phase==='done'?'Ver mi resultado':'Siguiente pregunta';button.onclick=data.phase==='done'?()=>results(data):next;
 }
 
 async function next(){

@@ -19,9 +19,15 @@ async function check(name){
 }
 setup();await check('inicio');
 document.querySelector('#setup-error').textContent='Se cortó la conexión. Reconectá para seguir.';await check('inicio con error');
-for(const q of orderedQuestions){
- showGame({phase:'active',score:0,lives:10,number:125,total:125,remainingMs:3600000,question:{id:q.id,text:q.question,difficulty:q.difficulty,options:q.options,final:!!q.acceptAll}});await check('pregunta '+q.id);
- for(const correct of [true,false]){readyScreen({phase:'ready',correct,answered:1,total:125,lives:9,answer:q.answer,explanation:q.explanation,score:1,lastReason:'timeout'});await check('respuesta '+q.id+' '+correct);}
+for(const [index,q] of orderedQuestions.entries()){
+ showGame({phase:'active',score:0,lives:10,number:index+1,total:125,remainingMs:3600000,question:{id:q.id,text:q.question,difficulty:q.difficulty,options:q.options,final:!!q.acceptAll}});await check('pregunta '+q.id);
+ const question=document.querySelector('h2'),options=[...document.querySelectorAll('.option')];
+ for(const correct of [true,false]){
+  readyScreen({phase:q.acceptAll?'done':'ready',correct,answered:index+1,total:125,lives:9,answer:q.answer,explanation:q.explanation,score:1,lastReason:'timeout'});await check('respuesta '+q.id+' '+correct);
+  if(document.querySelector('h2')!==question||options.some((el,i)=>el!==document.querySelectorAll('.option')[i])||options.some(el=>!el.disabled)||!document.querySelector('.option.correct')||document.body.dataset.screen!=='game')failures.push({name:'la corrección reemplazó la pregunta '+q.id});
+  document.querySelector('.answer-explanation').open=true;await check('explicación '+q.id+' '+correct);
+  document.querySelector('.answer-explanation').open=false;
+ }
 }
 for(const tier of tiers){
  for(const rankingPending of [false,true]){
