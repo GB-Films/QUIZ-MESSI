@@ -1,0 +1,28 @@
+<!doctype html><html lang="es-AR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><title>Verificación del festejo</title></head><body><main id="app"></main><script type="module">
+import {results,setup} from '/app.js';
+const failures=[];let checked=0;
+const check=(condition,name)=>{checked++;if(!condition)failures.push(name);};
+const settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+const winning={phase:'done',reason:'complete',score:116,lives:1,rank:25,nickname:'Final con errores',playerId:'victory-check'};
+results(winning);await settle();
+const dialog=document.querySelector('.victory-dialog');
+check(dialog?.open,'Al completar con nueve errores también se gana');
+check(document.activeElement===dialog?.querySelector('button'),'El foco entra al cartel');
+check(dialog?.textContent.includes('116')&&dialog?.textContent.includes('VIDAS RESTANTES'),'El cartel muestra el puntaje real');
+results({...winning,rank:24});await settle();
+check(document.querySelector('.victory-dialog')===dialog&&dialog.open,'Actualizar la posición conserva el festejo abierto');
+const rect=dialog.getBoundingClientRect();
+check(rect.left>=0&&rect.right<=innerWidth&&rect.top>=0&&rect.bottom<=innerHeight,'El cartel entra en la pantalla');
+dialog.querySelector('button').click();await settle();
+check(!document.querySelector('.victory-dialog')&&document.querySelector('#full-ranking'),'Ver mi resultado cierra el cartel');
+results(winning);await settle();
+check(!document.querySelector('.victory-dialog'),'Volver al mismo resultado no repite el festejo');
+results({...winning,score:124,lives:0,reason:'lives',playerId:'lost-check'});await settle();
+check(!document.querySelector('.victory-dialog'),'Perder no muestra un cartel de victoria');
+results({...winning,score:125,lives:10,playerId:'perfect-check'});await settle();
+check(document.querySelector('.victory-dialog')?.open,'La partida perfecta también muestra el festejo');
+setup();await settle();
+check(!document.querySelector('.victory-dialog'),'Navegar al menú elimina el cartel');
+document.body.dataset.screen='check';document.querySelector('#app').innerHTML='<pre id="check-result"></pre>';
+document.querySelector('#check-result').textContent=JSON.stringify({viewport:[innerWidth,innerHeight],checked,failures},null,2);
+</script></body></html>

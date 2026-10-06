@@ -6,6 +6,8 @@ Diez vidas totales por navegador, diez segundos por pregunta. Al responder, la p
 
 La pregunta 125 es «¿Quién es el mejor jugador de la historia?»: Lionel, Andrés, Messi y Cuccittini son respuestas correctas. Este cierre no tiene reloj, suma un acierto con cualquiera de las cuatro opciones y termina el recorrido. Completar el quiz también cierra la partida.
 
+Al completar la última pregunta con vidas restantes aparece un cartel centrado: «COMPLETASTE EL QUIZ. ¡GANASTE!», con tres estrellas, una copa, los aciertos reales y las vidas restantes. «Ver mi resultado» cierra el festejo y deja acceder al Messi ganado, al ranking y al menú. También se gana habiendo cometido errores: no exige 125 aciertos. El cartel se muestra una vez por partida; actualizar el puesto conserva el cartel abierto y volver al resultado no lo repite. El modo de prueba permite verlo al empezar desde la pregunta 125, identificado como «Festejo de prueba», sin guardar un récord público.
+
 El navegador conserva un identificador privado. No es una verificación del dispositivo físico: cambiar de navegador, usar una sesión privada o borrar sus datos puede crear otra identidad. Un límite estricto entre navegadores requiere identificación adicional.
 
 Los nombres pueden repetirse: cada récord pertenece a un ID público asociado a la identidad privada, nunca al nombre ni a la IP. Reabrir la misma identidad conserva su única partida y su mayor puntaje. Borrar la caché o los datos de un navegador no elimina los resultados guardados en Firebase; borrar toda la identidad local permite jugar con una identidad nueva y conserva el récord anterior en el histórico. Esto está permitido: no se agrega registro ni recuperación de identidad. Los resultados no tienen caducidad ni una operación pública de borrado.
@@ -58,6 +60,8 @@ npm start
 ```
 
 Abrir `http://127.0.0.1:4173/`.
+
+`/victory-check.html` comprueba el festejo con errores, la partida perfecta, el foco, el cierre y su conservación durante una actualización del resultado. `/results-check.html?score=124&complete=1` permite ver una victoria con una respuesta incorrecta. Estas vistas sólo existen en la vista previa local.
 
 `/screen-check.html` está disponible sólo en la vista previa: comprueba que el inicio, las 125 preguntas, sus respuestas y todos los resultados entren en la pantalla; recorre el ranking con 137 jugadores ficticios en memoria y verifica el regreso al resultado. No modifica datos públicos. `/layout-check.html` también está disponible sólo en la vista previa: renderiza las 125 preguntas para comprobar que el texto y el botón siguiente no se superponen ni requieren scroll. `/results-check.html?score=125` permite revisar los niveles y las fotos con resultados ficticios identificados como «Vista de prueba», sin escribir en el ranking.
 

@@ -6,6 +6,7 @@ const RANKING_PAGE_SIZE=100;
 const PRACTICE=location.pathname.endsWith('/prueba.html'), practice=createPracticeGame();
 const app=document.querySelector('#app'), KEY=PRACTICE?'messi-practice-v1':(['localhost','127.0.0.1'].includes(location.hostname)&&location.pathname==='/connection-check.html'?'messi-connection-check':'messi-survival-v1');
 let saved=readSaved(), storageReady=true, game=null, timer=null, deadline=0, busy=false, rankingRefresh=null, rankingResume=null, rankingGeneration=0;
+const celebratedGames=new Set();
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const aciertos=n=>`${n} ${n===1?'acierto':'aciertos'}`;
 function readSaved(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {};}}
@@ -14,7 +15,7 @@ function persist(){try{localStorage.setItem(KEY,JSON.stringify(saved));storageRe
 saved.playerToken ||= saved.pendingStart?.playerToken || crypto.randomUUID();persist();
 function balls(lives=10){return `<div class="lives" role="img" aria-label="${lives} de 10 vidas disponibles">${Array.from({length:10},(_,i)=>`<span class="ball ${i<lives?'':'spent'}" aria-hidden="true">⚽</span>`).join('')}<b>${lives}/10 VIDAS</b></div>`;}
 function stopTimer(){clearInterval(timer);timer=null;}
-function screen(mode,html){stopTimer();rankingGeneration++;clearInterval(rankingRefresh);rankingRefresh=null;rankingResume=null;document.body.dataset.screen=mode;app.innerHTML=html;window.scrollTo(0,0);}
+function screen(mode,html){stopTimer();rankingGeneration++;clearInterval(rankingRefresh);rankingRefresh=null;rankingResume=null;if(mode!=='result')document.querySelector('.victory-dialog')?.close();document.body.dataset.screen=mode;app.innerHTML=html;window.scrollTo(0,0);}
 function portrait(score,cls='portrait'){const a=tierForScore(score);return `<img class="${cls}" src="./assets/levels/${a.image}" alt="${esc(a.alt)}" title="${esc(a.name)}" style="object-position:${a.position};${cls==='portrait'&&a.fit?'object-fit:'+a.fit:''}" draggable="false">`;}
 async function api(action,body,params=''){
  if(PRACTICE&&action!=='leaderboard')return practice(action,body);
@@ -50,6 +51,7 @@ function setup(){
 }
 function practiceSetup(){
  busy=false;game=null;delete saved.pendingAnswer;delete saved.gameToken;persist();
+ celebratedGames.delete('practice');delete saved.victorySeen;persist();
  screen('setup',`<section class="setup-wrap"><p class="eyebrow">MODO DE PRUEBA</p><h1 tabindex="-1">ELEGÍ LA<br><em>PREGUNTA.</em></h1><p class="hook">Podés empezar desde cualquiera y seguir jugando. Esta prueba tiene sus propias diez vidas y no guarda resultados en el ranking.</p><form id="practice-form"><label class="field-label" for="practice-number">PREGUNTA DE INICIO</label><input id="practice-number" type="number" min="1" max="125" step="1" value="${saved.practiceNumber||1}" required><p id="practice-preview" class="challenge"></p><button class="primary">Arrancar prueba</button></form><a class="link-button" href="./index.html">Volver al menú principal</a></section>`);
  const input=app.querySelector('#practice-number'),preview=app.querySelector('#practice-preview');
  const update=()=>{preview.textContent=orderedQuestions[Number(input.value)-1]?.question||'Elegí un número entre 1 y 125.';};input.oninput=update;update();
@@ -128,6 +130,7 @@ function readyScreen(data){
  app.querySelector('.answer-explanation')?.remove();
  status.insertAdjacentHTML('afterend',`<details class="answer-explanation"><summary>Ver explicación</summary><p>${esc(data.explanation)}</p></details>`);
  const button=app.querySelector('#next');button.disabled=false;button.textContent=data.phase==='done'?'Ver mi resultado':'Siguiente pregunta';button.onclick=data.phase==='done'?()=>results(data):next;
+ if(data.phase==='done'&&data.reason==='complete'&&data.lives>0)results(data);
 }
 
 async function next(){
@@ -141,6 +144,24 @@ function personalRanking(data){
  const score=data.bestScore??data.score,known=!data.rankingPending&&Number.isInteger(data.rank)&&data.rank>0;
  return `<aside class="ranking-personal" aria-label="Tu posición global"><p class="personal-label">TU POSICIÓN GLOBAL</p><div class="personal-row"><strong class="personal-rank">${known?'#'+new Intl.NumberFormat('es-AR').format(data.rank):'Por actualizar'}</strong>${portrait(score,'mini-avatar')}<div class="personal-player"><span>${esc(data.nickname)}</span><small>${aciertos(score)} · Tu mejor resultado</small></div></div>${known?'':'<button class="link-button" id="refresh-personal-rank">Actualizar mi posición</button>'}</aside>`;
 }
+function celebrateVictory(data){
+ if(data.phase!=='done'||data.reason!=='complete'||data.lives<=0)return;
+ const token=saved.gameToken,key=token||`preview:${data.playerId||data.nickname}:${data.score}`;
+ if(celebratedGames.has(key)||(token&&saved.victorySeen===token))return;
+ celebratedGames.add(key);
+ const dialog=document.createElement('dialog');dialog.className='victory-dialog';
+ dialog.setAttribute('aria-labelledby','victory-title');dialog.setAttribute('aria-describedby','victory-copy');
+ dialog.innerHTML=`<div class="victory-content"><div class="victory-stars" aria-hidden="true">★ ★ ★</div>
+ <div class="victory-cup" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><path d="M31 22h38v24c0 15-8 24-19 24s-19-9-19-24V22Z" fill="currentColor"/><path d="M31 29H19v10c0 12 5 18 17 18M69 29h12v10c0 12-5 18-17 18" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><path d="M50 69v12M34 87h32M39 81h22v6H39z" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="m50 33 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z" fill="#102b3d"/></svg></div>
+ <p class="victory-label">${PRACTICE?'FESTEJO DE PRUEBA':'EL 10 TE APLAUDE'}</p>
+ <h2 id="victory-title">COMPLETASTE EL QUIZ.<br><em>¡GANASTE!</em></h2>
+ <p id="victory-copy">${PRACTICE?'Así se festeja cuando llegás al final.':'Llegaste hasta la última. Esta vuelta olímpica es tuya.'}</p>
+ <div class="victory-stats"><div><strong>${data.score}<span> / 125</span></strong><small>ACIERTOS</small></div><div><strong>${data.lives}<span> / 10</span></strong><small>VIDAS RESTANTES</small></div></div>
+ <button class="primary" autofocus>Ver mi resultado</button></div>`;
+ dialog.querySelector('button').onclick=()=>dialog.close();
+ dialog.addEventListener('close',()=>{if(token){saved.victorySeen=token;persist();}dialog.remove();focusTitle();},{once:true});
+ document.body.append(dialog);dialog.showModal();
+}
 function results(data){
  busy=false;game=data;
  const tier=tierForScore(data.score);
@@ -152,7 +173,8 @@ function results(data){
  if(PRACTICE){app.querySelector('.result-status span').textContent='FIN DE LA PRUEBA';app.querySelector('.your-rank').innerHTML='<strong>MODO DE PRUEBA</strong><span>NO SE GUARDA EN EL RANKING</span>';app.querySelector('#full-ranking').textContent='Elegir otra pregunta';app.querySelector('#full-ranking').onclick=practiceSetup;app.querySelector('#main-menu').onclick=()=>location.href='./index.html';}
  const refresh=app.querySelector('#refresh-result');if(refresh)refresh.onclick=async()=>{refresh.disabled=true;try{results(await api('state',{gameToken:saved.gameToken}));}catch{refresh.disabled=false;refresh.textContent='Volver a actualizar mi posición';}};
  if(refresh&&!PRACTICE){const current=app.querySelector('.result-wrap');api('state',{gameToken:saved.gameToken}).then(updated=>{if(app.querySelector('.result-wrap')===current&&!updated.rankingPending)results(updated);}).catch(()=>{});}
- focusTitle();
+ if(!document.querySelector('.victory-dialog[open]'))focusTitle();
+ celebrateVictory(data);
 }
 async function showRanking(cursor=null,back=setup,previous=[],preserveScroll=false){
  if(!preserveScroll)screen('ranking','<section class="ranking-wrap"><p role="status">Buscando los récords…</p></section>');

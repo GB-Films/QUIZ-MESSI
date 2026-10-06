@@ -108,3 +108,19 @@ body{min-width:0}.ball{flex:0 0 20px;width:20px;text-align:center;font-size:17px
 .game-bottom .answer-explanation p{position:absolute;z-index:2;bottom:calc(100% + 8px);left:0;width:100%;max-height:min(220px,38dvh);overflow-y:auto;background:#102b3d;border:1px solid #466173;border-radius:9px;padding:12px;color:var(--white);font-size:14px;line-height:1.5;box-shadow:0 4px 20px #0008}
 @media(max-height:550px){.clock.paused b{font-size:20px}.answer-explanation{font-size:12px}.answered .options{gap:5px}.answered .option{min-height:36px;padding:5px 9px}}
 .practice-switch{font:inherit;color:var(--gold);border:0;padding:0;background:none;text-decoration:underline;cursor:pointer}body[data-screen=setup] #practice-form{margin-top:26px}#practice-preview{font-size:16px}
+
+/* Un festejo al completar el recorrido, por encima del resultado guardado. */
+.victory-dialog{position:fixed;inset:0;margin:auto;width:min(440px,calc(100% - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--gold);border-radius:22px;background:radial-gradient(ellipse at 50% 0%,#21445a 0%,#102b3d 48%,#0c2231 100%);color:var(--white);box-shadow:0 24px 80px #0009,0 0 50px #f6cf7314;text-align:center;overflow:auto}
+.victory-dialog::backdrop{background:#03121ddb;backdrop-filter:blur(7px)}
+.victory-content{padding:28px 28px 30px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.victory-stars{color:var(--gold);font-size:21px;letter-spacing:8px;padding-left:8px}
+.victory-cup{width:104px;height:104px;color:var(--gold);border-radius:50%;background:#f6cf7310;box-shadow:0 0 40px #f6cf7312;padding:9px}.victory-cup svg{width:100%;height:100%}
+.victory-label{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--gold)}
+.victory-dialog h2{font-size:clamp(29px,8vw,40px);line-height:1.08}.victory-dialog h2 em{display:inline-block;margin-top:6px;color:var(--gold);font-size:1.45em}
+#victory-copy{max-width:300px;color:var(--muted);font-size:16px;line-height:1.5}
+.victory-stats{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;padding:18px 0;border-top:1px solid #89d4ff26;border-bottom:1px solid #89d4ff26}.victory-stats>div{display:grid;gap:5px}.victory-stats strong{font-family:'Barlow Condensed',Impact,sans-serif;font-size:34px;color:var(--blue);line-height:1}.victory-stats strong span{font-size:19px;color:var(--muted)}.victory-stats small{font-size:10px;letter-spacing:1px;color:var(--muted)}
+.victory-dialog .primary{background:var(--gold);min-height:50px}.victory-dialog .primary:hover{background:#ffe4a5}
+.victory-dialog[open]{animation:victory-enter .25s ease-out}
+@keyframes victory-enter{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@media(max-height:600px){.victory-content{padding:20px;gap:12px}.victory-cup{width:70px;height:70px}.victory-stars{font-size:17px}.victory-dialog h2{font-size:29px}#victory-copy{font-size:14px;line-height:1.35}.victory-stats{padding:12px 0}.victory-stats strong{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.victory-dialog[open]{animation:none}}
