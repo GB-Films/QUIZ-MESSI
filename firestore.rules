@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // This dedicated identity's refresh credential stays in server secrets.
+    // Players use the validated quiz API; other identities have no access.
+    function server() { return request.auth != null && request.auth.uid == 'quiz-ranking-server'; }
+    match /quizRankings/argentina-survival-1/players/{player} {
+      allow read, write: if server();
+    }
+    match /quizGameVersions/argentina-survival-1/games/{game} {
+      allow read, write: if server();
+    }
+    match /quizPlayerVersions/argentina-survival-1/identities/{player} {
+      allow read, write: if server();
+    }
+    match /quizRateLimits/{bucket} {
+      allow read, write: if server();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

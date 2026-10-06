@@ -1,0 +1,10 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {"collectionGroup": "players", "fieldPath": "*", "indexes": []},
+    {"collectionGroup": "players", "fieldPath": "orderKey", "indexes": [{"order": "ASCENDING", "queryScope": "COLLECTION"}]},
+    {"collectionGroup": "games", "fieldPath": "*", "indexes": []},
+    {"collectionGroup": "identities", "fieldPath": "*", "indexes": []},
+    {"collectionGroup": "quizRateLimits", "fieldPath": "*", "indexes": []}
+  ]
+}

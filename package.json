@@ -2,6 +2,6 @@
   "name": "messi-quiz",
   "private": true,
   "type": "module",
-  "scripts": { "check": "node verify.mjs", "test": "node backend/test.mjs", "start": "node backend/preview.mjs", "build": "node backend/build.mjs", "db:generate": "drizzle-kit generate --config backend/drizzle.config.ts" },
+  "scripts": { "check": "node verify.mjs", "test": "node backend/test.mjs && node backend/firestore.test.mjs", "start": "node backend/preview.mjs", "build": "node backend/build.mjs", "db:generate": "drizzle-kit generate --config backend/drizzle.config.ts" },
   "devDependencies": { "drizzle-orm": "0.45.2", "drizzle-kit": "0.31.10" }
 }

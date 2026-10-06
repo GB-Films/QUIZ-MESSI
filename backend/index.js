@@ -1,45 +1,35 @@
 import { orderedQuestions } from '../dist/questions.js';
+import { firebaseEnabled, createFirebaseRanking } from './firestore.js';
+import { createFirebaseGames } from './firebase-games.js';
+import { VERSION, TIME, uuidPattern, digest, fail, cleanName, publicGame } from './quiz-rules.js';
 
-export const VERSION = 'argentina-survival-1';
+export { VERSION } from './quiz-rules.js';
 const ORIGINS = new Set(['https://gb-films.github.io','http://127.0.0.1:4173','http://localhost:4173']);
-const TIME = 10000;
-const uuidPattern = /^[a-f0-9-]{36}$/i;
 const query = (db, sql, values = []) => db.prepare(sql).bind(...values);
-const digest = async value => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map(x=>x.toString(16).padStart(2,'0')).join('');
-function fail(message, status = 400) { throw Object.assign(new Error(message), {status}); }
-function cleanName(value) {
-  if (typeof value !== 'string') fail('Escribí tu nombre para el ranking.');
-  const name = value.normalize('NFC').trim().replace(/\s+/g,' ');
-  if (name.length < 2 || name.length > 20 || /[<>\p{Cc}\p{Cf}]/u.test(name)) fail('Usá un nombre de 2 a 20 caracteres.');
-  return name;
-}
-async function leaderboard(db) {
+async function leaderboard(db, firebase) {
+  if (firebase) return firebase.leaderboard();
   const {results} = await query(db, 'SELECT public_id AS id, nickname, avatar, score, elapsed_ms AS elapsedMs FROM quiz_players WHERE version=? AND score>=0 ORDER BY score DESC, elapsed_ms ASC, updated_at ASC LIMIT 5', [VERSION]).all();
   const count = await query(db,'SELECT COUNT(*) AS n FROM quiz_players WHERE version=? AND score>=0',[VERSION]).first();
   return {entries:results,total:count.n};
 }
-async function result(db, game) {
+async function result(db, game, firebase) {
   // Cada jugador ocupa una sola fila: se conserva su mejor partida.
   await query(db, `UPDATE quiz_players SET nickname=?, avatar=?, score=?, elapsed_ms=?, updated_at=?
     WHERE token_hash=? AND version=? AND (score<? OR (score=? AND elapsed_ms>?))`,
     [game.nickname,game.avatar,game.score,game.elapsed_ms,game.finished_at,game.player_hash,VERSION,game.score,game.score,game.elapsed_ms]).run();
-  const player = await query(db,'SELECT public_id, score, elapsed_ms, updated_at FROM quiz_players WHERE token_hash=?',[game.player_hash]).first();
+  const player = await query(db,'SELECT * FROM quiz_players WHERE token_hash=?',[game.player_hash]).first();
+  if (firebase) {
+    // Retry the retained best record even if the previous Firestore write failed.
+    const best = await firebase.saveBest(player);
+    const [rank, board] = await Promise.all([firebase.rank(best), firebase.leaderboard()]);
+    return {phase:'done',score:game.score,elapsedMs:game.elapsed_ms,reason:game.reason,avatar:game.avatar,nickname:game.nickname,
+      bestScore:best.score,rank,playerId:player.public_id,...board};
+  }
   const above = await query(db, `SELECT COUNT(*) AS n FROM quiz_players WHERE version=? AND score>=0 AND
     (score>? OR (score=? AND elapsed_ms<?) OR (score=? AND elapsed_ms=? AND updated_at<?))`,
     [VERSION,player.score,player.score,player.elapsed_ms,player.score,player.elapsed_ms,player.updated_at]).first();
   return {phase:'done',score:game.score,elapsedMs:game.elapsed_ms,reason:game.reason,avatar:game.avatar,nickname:game.nickname,
     bestScore:player.score,rank:above.n+1,playerId:player.public_id,...await leaderboard(db)};
-}
-function question(game) {
-  const item = orderedQuestions[game.cursor];
-  // La respuesta correcta y la explicación nunca viajan antes de responder.
-  const options = [...item.options];
-  for(let i=options.length-1;i>0;i--){const j=crypto.getRandomValues(new Uint32Array(1))[0]%(i+1);[options[i],options[j]]=[options[j],options[i]];}
-  return {id:item.id,text:item.question,category:item.category,difficulty:item.difficulty,options};
-}
-function publicGame(game, now) {
-  return {phase:game.phase,score:game.score,number:game.cursor+1,total:orderedQuestions.length,
-    remainingMs:Math.max(0,game.deadline-now),question:question(game)};
 }
 async function start(db, body, request, now) {
   const nickname = cleanName(body.nickname);
@@ -63,12 +53,12 @@ async function start(db, body, request, now) {
   const game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[id]).first();
   return {gameToken:id,playerToken,...publicGame(game,now)};
 }
-async function gameAction(db, action, body, now) {
+async function gameAction(db, action, body, now, firebase) {
   if(typeof body.gameToken!=='string'||!uuidPattern.test(body.gameToken)) fail('Partida no encontrada.',404);
   let game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[body.gameToken]).first();
   if(!game) fail('Partida no encontrada.',404);
   if(game.version!==VERSION) fail('El quiz se actualizó. Empezá una partida nueva.',409);
-  if(game.phase==='done') return result(db,game);
+  if(game.phase==='done') return result(db,game,firebase);
   if(action==='next'){
     if(game.phase!=='ready') fail('Primero respondé la pregunta actual.',409);
     await query(db,`UPDATE quiz_games SET phase='active', issued_at=?, deadline=? WHERE id=? AND phase='ready' AND cursor=?`,
@@ -81,7 +71,7 @@ async function gameAction(db, action, body, now) {
       await query(db,`UPDATE quiz_games SET phase='done', reason='timeout', finished_at=?, elapsed_ms=elapsed_ms+? WHERE id=? AND phase='active' AND cursor=?`,
         [now,TIME,game.id,game.cursor]).run();
       game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
-      if(game.phase==='done')return result(db,game);
+      if(game.phase==='done')return result(db,game,firebase);
       return game.phase==='ready'?{phase:'ready',score:game.score}:publicGame(game,now);
     }
     if(game.phase==='ready') return {phase:'ready',score:game.score};
@@ -110,7 +100,7 @@ async function gameAction(db, action, body, now) {
     WHERE id=? AND phase='active' AND cursor=? AND deadline=?`,
     [score,game.cursor+(correct?1:0),finished?'done':'ready',finished?reason:null,finished?now:null,elapsed,game.id,game.cursor,game.deadline]).run();
   game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
-  if(game.phase==='done') return result(db,game);
+  if(game.phase==='done') return result(db,game,firebase);
   if(update.meta.changes===0) return {phase:'ready',correct:true,score:game.score};
   return {phase:'ready',correct:true,score,answer:item.answer,explanation:item.explanation};
 }
@@ -126,8 +116,11 @@ export default {
     if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
     if(url.pathname==='/') return Response.redirect('https://gb-films.github.io/QUIZ-MESSI/',302);
     try {
-      if(!env.DB) fail('El ranking no está disponible. Intentá nuevamente.',503);
-      if(request.method==='GET'&&url.pathname==='/api/leaderboard') return json(await leaderboard(env.DB));
+      if(env.QUIZ_MAINTENANCE==='true'&&url.pathname!=='/api/leaderboard') fail('Estamos actualizando el guardado. Intentá nuevamente en un momento.',503);
+      const cloudGames=env.FIREBASE_GAMES_ENABLED==='true'?createFirebaseGames(env):null;
+      if(!cloudGames&&!env.DB) fail('El ranking no está disponible. Intentá nuevamente.',503);
+      const firebase=firebaseEnabled(env)?createFirebaseRanking(env,VERSION):null;
+      if(request.method==='GET'&&url.pathname==='/api/leaderboard') return json(await (cloudGames?cloudGames.leaderboard():leaderboard(env.DB,firebase)));
       if(request.method!=='POST') return json({error:'No encontrado.'},404);
       if(!request.headers.get('Content-Type')?.includes('application/json')) fail('Formato inválido.',415);
       if(Number(request.headers.get('Content-Length')||0)>2048) fail('Solicitud demasiado grande.',413);
@@ -135,10 +128,10 @@ export default {
       let body;try{body=JSON.parse(raw);}catch{fail('Formato inválido.');}
       if(!body||typeof body!=='object'||Array.isArray(body)) fail('Formato inválido.');
       const now=Date.now();
-      if(url.pathname==='/api/start') return json(await start(env.DB,body,request,now));
+      if(url.pathname==='/api/start') return json(await (cloudGames?cloudGames.start(body,now):start(env.DB,body,request,now)));
       const action=url.pathname.match(/^\/api\/(answer|next|state)$/)?.[1];
       if(!action) return json({error:'No encontrado.'},404);
-      return json(await gameAction(env.DB,action,body,now));
+      return json(await (cloudGames?cloudGames.action(action,body,now):gameAction(env.DB,action,body,now,firebase)));
     } catch(error) {
       if(!error.status) console.error('Quiz API storage failure',error.message);
       return json({error:error.status?error.message:'El ranking no está disponible. Intentá nuevamente.'},error.status||503);

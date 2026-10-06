@@ -32,8 +32,9 @@ function setup(){
  <button class="link-button" id="show-ranking">Ver ranking global</button><details class="credits"><summary>Sobre el quiz y las fotos</summary><p>Edición de 125 preguntas: <a href="https://www.afa.com.ar/es/posts/125-goles-207-partidos-y-una-historia-que-cambio-para-siempre-a-la-seleccion-argentina" target="_blank" rel="noopener">125 goles de Messi con Argentina según AFA</a>. Incluye Selección mayor, Sub-20 y Juegos Olímpicos. Quiz independiente.</p><p>Fotos y fuentes: ${tiers.map(a=>`<a href="${a.source}" target="_blank" rel="noopener">${a.name}</a>`).join(' · ')}. Créditos fotográficos en las fuentes enlazadas.</p><p>Ranking: mejor resultado por navegador. Ganan más aciertos; en un empate, menor tiempo acumulado. Si ambos coinciden, el récord alcanzado primero. La foto del ranking corresponde al récord, la del resultado a la partida recién jugada.</p></details></div>`);
  app.querySelector('#setup-form').onsubmit=async event=>{
   event.preventDefault();if(busy)return;busy=true;
-  const nickname=app.querySelector('#nickname').value.trim(),button=app.querySelector('#start');button.disabled=true;button.textContent='Entrando a la cancha…';
-  try{const data=await api('start',{nickname,avatar:3,playerToken:saved.playerToken});saved={...saved,nickname,playerToken:data.playerToken,gameToken:data.gameToken};persist();game=data;showGame(data);focusTitle();}
+ const nickname=app.querySelector('#nickname').value.trim(),button=app.querySelector('#start');button.disabled=true;button.textContent='Entrando a la cancha…';
+ if(!saved.pendingStart||saved.pendingStart.nickname!==nickname)saved.pendingStart={nickname,avatar:3,playerToken:saved.playerToken||crypto.randomUUID(),requestId:crypto.randomUUID()};persist();
+ try{const data=await api('start',saved.pendingStart);saved={...saved,nickname,playerToken:data.playerToken,gameToken:data.gameToken};delete saved.pendingStart;persist();game=data;showGame(data);focusTitle();}
   catch(error){app.querySelector('#setup-error').textContent=error.message;button.disabled=false;button.textContent='Estoy listo. Vamos.';}finally{busy=false;}
  };
  app.querySelector('#show-ranking').onclick=showRanking;
@@ -78,13 +79,14 @@ function results(data){
  const tier=tierForScore(data.score),level=tiers.indexOf(tier),nextTier=tiers[level+1];
  screen('result',`<section class="result-wrap ${data.score===125?'ultimate':''}"><p class="eyebrow">${data.score===125?'125 DE 125 · EL NIVEL DEFINITIVO':'TU RESULTADO: SOS'}</p><h1 tabindex="-1">${tier.name.toUpperCase()}</h1><p class="tier-era">${tier.era} · NIVEL ${level+1}/${tiers.length}</p>${portrait(data.score)}<p class="tier-copy">${tier.copy}</p><h2 class="player-name">${esc(data.nickname)}</h2>
  <p class="end-reason">${data.reason==='timeout'?'Se acabaron los 10 segundos.':data.reason==='wrong'?'Un error. Se terminó tu vida.':'125 respuestas. Una historia de campeón.'}</p><div class="result-score">${data.score}<span> / 125</span></div><p class="score-caption">ACIERTOS EN ESTA PARTIDA</p>
- <div class="your-rank"><strong>#${data.rank} EN EL RANKING GLOBAL</strong><span>TU RÉCORD: ${aciertos(data.bestScore).toUpperCase()} · ${data.total} ${data.total===1?'JUGADOR':'JUGADORES'}</span></div>
+ <div class="your-rank"><strong>${data.rankingPending?'TU RESULTADO ESTÁ GUARDADO':`#${data.rank} EN EL RANKING GLOBAL`}</strong><span>TU RÉCORD: ${aciertos(data.bestScore).toUpperCase()}${data.total===null?'':` · ${data.total} ${data.total===1?'JUGADOR':'JUGADORES'}`}</span></div>
  ${nextTier?`<p class="next-tier">${aciertos(nextTier.min-data.score)} más y eras <b>${nextTier.name}</b>.</p>`:'<p class="next-tier">Llegaste al último nivel. La heladería es tuya.</p>'}
- <div class="ranking-heading"><h3>LOS 5 DEL 10</h3><span>RÉCORDS GLOBALES</span></div><ol class="ranking">${rankingRows(data)}</ol><p class="ranking-note">Tu posición corresponde a tu mejor partida. Empates: menor tiempo de respuesta.</p>
+ <div class="ranking-heading"><h3>LOS 5 DEL 10</h3><span>RÉCORDS GLOBALES</span></div>${data.rankingPending?'<p class="ranking-note">Tu partida quedó guardada. El ranking está tardando en responder.</p><button class="link-button" id="refresh-result">Actualizar mi posición</button>':`<ol class="ranking">${rankingRows(data)}</ol><p class="ranking-note">Tu posición corresponde a tu mejor partida. Empates: menor tiempo de respuesta.</p>`}
  <button class="primary" id="again">Prepararme y volver a jugar</button><button class="link-button" id="share">Compartir mi resultado</button><p class="share-status" id="share-status" aria-live="polite"></p><a class="photo-credit" href="${tier.source}" target="_blank" rel="noopener">Fuente de la foto</a></section>`);
  app.querySelector('#again').onclick=()=>{delete saved.gameToken;persist();setup();focusTitle();};
+ const refresh=app.querySelector('#refresh-result');if(refresh)refresh.onclick=async()=>{refresh.disabled=true;try{results(await api('state',{gameToken:saved.gameToken}));}catch{refresh.disabled=false;refresh.textContent='Volver a actualizar mi posición';}};
  app.querySelector('#share').onclick=async()=>{
-  const text=`Soy ${tier.name}: ${data.score}/125 aciertos en el quiz de Messi 🇦🇷. Mi récord está #${data.rank} en el ranking global. Una vida. 10 segundos por pregunta. ¿Qué Messi sos vos?`;
+  const text=`Soy ${tier.name}: ${data.score}/125 aciertos en el quiz de Messi 🇦🇷.${data.rankingPending?'':` Mi récord está #${data.rank} en el ranking global.`} Una vida. 10 segundos por pregunta. ¿Qué Messi sos vos?`;
   try{if(navigator.share)await navigator.share({title:'El desafío del 10',text,url:location.href});else{await navigator.clipboard.writeText(`${text}\n${location.href}`);app.querySelector('#share-status').textContent='Resultado copiado para compartir.';}}
   catch(error){if(error.name!=='AbortError')app.querySelector('#share-status').textContent='No se pudo compartir. Copiá el enlace de esta página.';}
  };focusTitle();

@@ -4,3 +4,8 @@ node_modules/
 .DS_Store
 .openai/
 *.tar.gz
+*-firebase-adminsdk-*.json
+firebase-service-account*.json
+ranking-export*.json
+.firebase/
+firebase-debug.log*
