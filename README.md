@@ -128,3 +128,7 @@ Quiz independiente, sin afiliación oficial con Lionel Messi, la AFA o la FIFA.
 Para el motor alternativo SQLite/D1, aplicar `drizzle/0001_ten_lives.sql`, una migración aditiva que conserva las tablas y datos anteriores. La vista previa y las pruebas la aplican automáticamente. Firestore no necesita una migración de esquema ni cambios de permisos. Las reglas actuales siguen admitiendo las mismas colecciones.
 
 Las pruebas recorren el banco completo y comprueban las cuatro opciones finales, el fin con errores previos, el bloqueo a cero vidas, los tiempos agotados, la recuperación de la explicación y las solicitudes simultáneas tanto en SQLite como en Firestore simulado.
+
+## Navegación del menú
+
+El inicio incluye un botón visible «Ver ranking histórico». El ranking y el resultado final permiten volver al menú principal. Volver al menú conserva la partida terminada y sus vidas: muestra «Ver mi resultado» y permite consultar el ranking, sin habilitar una partida nueva. El servidor mantiene el bloqueo de la edición al agotar diez vidas o completar el quiz.
