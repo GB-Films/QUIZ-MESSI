@@ -28,8 +28,8 @@ function focusTitle(){app.querySelector('h1,h2')?.focus({preventScroll:true});}
 function setup(){
  busy=false;if(game?.phase!=='done')game=null;const finished=game?.phase==='done';
  screen('setup',`<div class="setup-wrap"><header class="brand"><b>10</b><span>MESSI<small>EL QUIZ ALBICELESTE</small></span><span class="stars">★ ★ ★</span></header>
- <p class="eyebrow">125 PREGUNTAS · DE FÁCIL A EXPERTO</p><h1 tabindex="-1">DIEZ CHANCES.<br><em>TODO POR EL 10.</em></h1>
- <p class="hook"><strong>10 vidas. 10 segundos por pregunta.</strong> Cada error o tiempo agotado resta una vida.</p>${balls(finished?game.lives:10)}<p class="challenge">${finished?'Tu partido terminó. Tu récord quedó guardado en el ranking histórico.':'No se renuevan: al perder las 10, se termina. Tu progreso se guarda.'}</p>
+ <h1 tabindex="-1">DIEZ CHANCES.<br><em>TODO POR EL 10.</em></h1>
+ <p class="hook"><strong>125 preguntas. 10 vidas. 10 segundos para responder.</strong></p><p class="challenge">Cada error o tiempo agotado resta una vida. Si te quedás sin vidas, se termina la carrera.</p>
  <form id="setup-form"><label class="field-label" for="nickname">TU NOMBRE EN EL RANKING</label><input id="nickname" name="nickname" minlength="2" maxlength="20" required autocomplete="nickname" placeholder="¿Cómo te llaman?" value="${esc(finished?game.nickname:(saved.nickname||''))}" ${finished?'disabled':''}>
  <div class="earned-hook"><b>¿QUÉ MESSI SOS?</b><p>${tiers.length} versiones de Leo. Tu puntaje decide cuál sos.</p></div>
  <button class="primary" id="start" type="submit">${finished?'Ver mi resultado':'Arrancar partido'}</button><p class="error" id="setup-error" role="alert"></p></form>
