@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { questions, goalReference, orderedQuestions } from './dist/questions.js';
+import { tiers, tierForScore } from './dist/tiers.js';
 assert.equal(questions.length, goalReference.total);
 assert.equal(new Set(questions.map(q => q.question)).size, 125);
 for (const q of questions) {
@@ -16,4 +17,17 @@ assert.equal(new Set(questions.map(q => q.category)).size, 5);
 const html = await readFile('./dist/index.html', 'utf8');
 for (const asset of ['style.css', 'app.js', 'questions.js', 'favicon.svg']) await readFile(`./dist/${asset}`);
 assert.ok(html.includes('lang="es-AR"'));
-console.log('125 preguntas únicas de la Selección, 4 opciones, dificultad creciente y recursos verificados.');
+assert.equal(tiers.length, 10);
+assert.equal(new Set(tiers.map(t => t.image)).size, 10);
+for (let score=0;score<=125;score++) {
+ assert.equal(tiers.filter(t => score>=t.min && score<=t.max).length,1,`Un solo nivel para ${score} aciertos`);
+ assert.ok(tierForScore(score));
+}
+assert.equal(tierForScore(0).name,'Messi en el banco');
+assert.equal(tierForScore(111).name,'Messi campeón del mundo');
+assert.equal(tierForScore(124).name,'Messi campeón del mundo');
+assert.equal(tierForScore(125).name,'Messi Grido');
+assert.equal(tiers.at(-1).min,125);
+for (const t of tiers) assert.ok((await readFile(`./dist/assets/levels/${t.image}`)).length>1000,`Foto existente: ${t.name}`);
+for (const score of [-1,126,1.5,NaN]) assert.throws(()=>tierForScore(score),RangeError);
+console.log('125 preguntas verificadas. Diez fotos y todos los niveles de 0 a 125; Grido exclusivo de 125 aciertos.');

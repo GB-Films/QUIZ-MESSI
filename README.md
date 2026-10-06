@@ -4,7 +4,22 @@
 
 Una vida por partida, diez segundos por pregunta. El primer error o el tiempo agotado termina el juego. Al acertar se habilita la siguiente pregunta; el nuevo reloj comienza al abrirla. La pantalla de juego mantiene las cuatro opciones y el botón siguiente visibles en el celular.
 
-Antes de empezar se elige nombre y uno de cuatro personajes. El Messi joven está seleccionado de entrada. Al terminar aparece el personaje, el resultado de la partida, el mejor récord, la posición global y los cinco primeros.
+Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida determinan qué Messi sos, con una foto real de su historia. El ranking muestra la foto ganada por el mejor récord de cada jugador, además de su posición global. Compartir incluye el Messi ganado y el puntaje.
+
+| Aciertos | Resultado |
+| --- | --- |
+| 0–13 | Messi en el banco · Alemania 2006 |
+| 14–27 | Messi debutante · primer gol mundialista 2006 |
+| 28–41 | Messi olímpico · Beijing 2008 |
+| 42–55 | Messi capitán · Sudáfrica 2010 |
+| 56–69 | Messi finalista · Brasil 2014 |
+| 70–83 | Messi salvador · Quito 2017 |
+| 84–97 | Messi de América · 2021 |
+| 98–110 | Messi de Wembley · Finalissima 2022 |
+| 111–124 | Messi campeón del mundo · besando la Copa en Qatar 2022 |
+| 125 | Messi Grido · nivel exclusivo para un pleno |
+
+Los niveles se definen en `dist/tiers.js`, con sus diez fotos en `dist/assets/levels/`. El dato usado es el puntaje validado por el servidor. El campo antiguo de avatar se conserva sólo por compatibilidad con la API; ya no determina ninguna foto.
 
 El ranking usa almacenamiento compartido en el servidor, separado de GitHub Pages. El servidor valida respuestas y tiempos; el navegador conserva preferencias y los identificadores privados del jugador y de su partida. Una fila por navegador, conservando su mejor resultado. Desempate por menor tiempo acumulado y luego por la fecha del récord. No hay verificación de identidad entre dispositivos.
 
@@ -26,7 +41,7 @@ npm start
 
 Abrir `http://127.0.0.1:4173/`.
 
-`/layout-check.html` está disponible sólo en la vista previa: renderiza las 125 preguntas para comprobar que el texto y el botón siguiente no se superponen ni requieren scroll.
+`/layout-check.html` está disponible sólo en la vista previa: renderiza las 125 preguntas para comprobar que el texto y el botón siguiente no se superponen ni requieren scroll. `/results-check.html?score=125` permite revisar los niveles y las fotos con resultados ficticios identificados como «Vista de prueba», sin escribir en el ranking.
 
 Verificado en 320×568, 375×667 y 390×844. También se comprobaron un acierto, un error, el tiempo agotado, reintentos de respuestas, recuperación de partidas y conservación del mejor récord.
 
@@ -36,9 +51,9 @@ Verificado en 320×568, 375×667 y 390×844. También se comprobaron un acierto,
 
 Para generar nuevas migraciones se instalan las herramientas con `npm install` y se ejecuta `npm run db:generate`. Las migraciones aplicadas se conservan sin modificar. El manifiesto de alojamiento y los secretos no se publican en este repositorio.
 
-## Ilustraciones
+## Fotografías
 
-Se usan las cuatro referencias existentes elegidas durante el diseño. Créditos y enlaces originales en el inicio: Dibujando.net, TyC Sports, PNGFind y Pinterest. Los derechos de las ilustraciones pertenecen a sus autores. PNGFind indica uso personal para el Messi joven; no se afirma una licencia comercial ni propiedad sobre estas imágenes.
+Se usan diez fotografías existentes. Cada resultado enlaza la fuente de su foto; el inicio reúne las diez referencias. Fuentes: TyC Sports, TNT Sports, C5N, La Nación, Meridiano/AS, O Globo, AS, El Destape, beIN Sports e iProfesional. Créditos fotográficos en las páginas enlazadas. La imagen final es la foto de Messi joven en Grido, no la de un parecido a Messi. Las fotografías no fueron generadas ni se afirma propiedad o licencia comercial sobre ellas.
 
 ## Preguntas
 
