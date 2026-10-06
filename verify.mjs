@@ -3,7 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { questions, goalReference, orderedQuestions } from './dist/questions.js';
 import { tiers, tierForScore } from './dist/tiers.js';
 assert.equal(questions.length, goalReference.total);
-assert.equal(new Set(questions.map(q => q.question)).size, 125);
+assert.equal(new Set(questions.map(q => q.question.toLowerCase().normalize('NFD').replace(/\p{M}/gu,'').replace(/[^a-z0-9]/g,''))).size, 125);
+assert.equal(orderedQuestions.at(-1).id,50);
+assert.equal(orderedQuestions.filter(q=>q.acceptAll).length,1);
+assert.ok(orderedQuestions.at(-1).acceptAll);
+assert.equal(orderedQuestions[0].id,68);
 for (const q of questions) {
   assert.equal(q.options.length, 4, `Cuatro opciones: ${q.id}`);
   assert.equal(new Set(q.options).size, 4, `Opciones distintas: ${q.id}`);

@@ -8,6 +8,13 @@
       "when": 1791261550041,
       "tag": "0000_misty_marvel_apes",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791302400000,
+      "tag": "0001_ten_lives",
+      "breakpoints": true
     }
   ]
 }

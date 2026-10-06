@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createFirebaseRanking } from './firestore.js';
 import worker, { VERSION } from './index.js';
 import { orderedQuestions } from '../dist/questions.js';
+import { gameScenarios } from './game-scenarios.mjs';
 
 const pair = await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
 const pem = `-----BEGIN PRIVATE KEY-----\n${Buffer.from(await crypto.subtle.exportKey('pkcs8',pair.privateKey)).toString('base64')}\n-----END PRIVATE KEY-----`;
@@ -91,12 +92,19 @@ try {
   // A cloud failure after SQLite commits must recover the result on retry.
   sqlite = new DatabaseSync(':memory:');
   sqlite.exec(await readFile('drizzle/0000_misty_marvel_apes.sql','utf8'));
+sqlite.exec(await readFile('drizzle/0001_ten_lives.sql','utf8'));
   env.DB = {prepare(sql){return {bind(...values){const statement=sqlite.prepare(sql);return {async first(){return statement.get(...values)||null;},async all(){return {results:statement.all(...values)};},async run(){return {meta:{changes:statement.run(...values).changes}};}};}};}};
   async function post(action,body){const response=await worker.fetch(new Request(`https://quiz.test/api/${action}`,{method:'POST',headers:{'Content-Type':'application/json','Origin':'https://gb-films.github.io'},body:JSON.stringify(body)}),env);return {status:response.status,...await response.json()};}
   const game = await post('start',{nickname:'Nube',avatar:3});
   const wrong = game.question.options.find(value=>value!==orderedQuestions[0].answer);
+  for(let i=0;i<9;i++){
+    const state=await post('state',{gameToken:game.gameToken});
+    const active=state.phase==='ready'?await post('next',{gameToken:game.gameToken}):state;
+    await post('answer',{gameToken:game.gameToken,questionId:active.question.id,choice:0,value:active.question.options.find(v=>v!==orderedQuestions[active.number-1].answer)});
+  }
+  const tenth=await post('next',{gameToken:game.gameToken});
   outage = true;
-  const lost = await post('answer',{gameToken:game.gameToken,questionId:game.question.id,choice:0,value:wrong,score:125});
+  const lost = await post('answer',{gameToken:game.gameToken,questionId:tenth.question.id,choice:0,value:tenth.question.options.find(v=>v!==orderedQuestions[tenth.number-1].answer),score:125});
   assert.equal(lost.status,503);
   outage = false;
   const retry = await post('state',{gameToken:game.gameToken});
@@ -115,56 +123,28 @@ try {
   Date.now = () => now;
   try {
     async function cloudPost(action,body){const response=await worker.fetch(new Request(`https://quiz.test/api/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),cloudEnv);return {status:response.status,...await response.json()};}
-    const startBody = {nickname:'Firebase',avatar:3,requestId:crypto.randomUUID(),playerToken:crypto.randomUUID(),score:125};
-    const cloudGame = await cloudPost('start',startBody);
-    const startAgain = await cloudPost('start',startBody);
-    assert.equal(cloudGame.status,200); assert.equal(cloudGame.gameToken,startAgain.gameToken);
-    assert.equal(cloudGame.playerToken,startAgain.playerToken); assert.equal(cloudGame.score,0);
-    assert.equal([...documents.keys()].filter(key=>key.includes('/games/')&&key.endsWith(cloudGame.gameToken)).length,1);
-    now+=100;
-    const answerBody = {gameToken:cloudGame.gameToken,questionId:cloudGame.question.id,choice:0,value:orderedQuestions[0].answer,score:125};
-    const simultaneous = await Promise.all(Array.from({length:20},()=>cloudPost('answer',answerBody)));
-    assert.ok(simultaneous.every(response=>response.status===200&&response.score===1),'Concurrent answer retries count once');
-    assert.equal((await cloudPost('state',{gameToken:cloudGame.gameToken})).phase,'ready');
-    const second = await cloudPost('next',{gameToken:cloudGame.gameToken});
-    now+=100;
-    const nextAgain = await cloudPost('next',{gameToken:cloudGame.gameToken});
-    assert.equal(second.number,nextAgain.number);
-    assert.equal(nextAgain.remainingMs,second.remainingMs-100,'Next retries cannot restart the clock');
-    rankingOutage = true;
-    const finished = await cloudPost('answer',{gameToken:cloudGame.gameToken,questionId:second.question.id,choice:0,value:second.question.options.find(value=>value!==orderedQuestions[1].answer)});
-    assert.equal(finished.status,200); assert.equal(finished.score,1);
-    assert.equal(finished.resultSaved,true); assert.equal(finished.rankingPending,true);
-    assert.equal(finished.rank,null);
-    const durableGame = [...documents.values()].find(doc=>doc.name.includes('/games/')&&doc.name.endsWith(cloudGame.gameToken));
-    assert.equal(durableGame.fields.phase.stringValue,'done');
-    assert.ok([...documents.values()].some(doc=>doc.name.includes('/quizRankings/')&&doc.fields.nickname.stringValue==='Firebase'&&doc.fields.score.integerValue==='1'));
-    rankingOutage = false;
-    const recovered = await cloudPost('state',{gameToken:cloudGame.gameToken});
-    assert.equal(recovered.score,1); assert.equal(recovered.bestScore,1); assert.equal(recovered.resultSaved,true);
-    assert.ok(Number.isInteger(recovered.rank));
-    const newGame = await cloudPost('start',{nickname:'Firebase',avatar:3,playerToken:cloudGame.playerToken});
-    now+=10001;
-    const timedOut = await cloudPost('state',{gameToken:newGame.gameToken});
-    assert.equal(timedOut.reason,'timeout'); assert.equal(timedOut.score,0); assert.equal(timedOut.bestScore,1);
-    assert.equal(timedOut.total,recovered.total,'Replaying retains one player row');
-    const lostStart = {nickname:'Reconectar',avatar:3,playerToken:crypto.randomUUID(),requestId:crypto.randomUUID()};
-    loseCommitResponse = true;
+    await gameScenarios(cloudPost,ms=>now+=ms);
+    const lostStart={nickname:'Reconectar',avatar:3,playerToken:crypto.randomUUID(),requestId:crypto.randomUUID()};
+    loseCommitResponse=true;
     assert.equal((await cloudPost('start',lostStart)).status,503);
-    const restoredStart = await cloudPost('start',lostStart);
-    assert.equal(restoredStart.status,200); assert.equal(restoredStart.gameToken,lostStart.requestId);
-    assert.equal([...documents.keys()].filter(key=>key.includes('/games/')&&key.endsWith(lostStart.requestId)).length,1,'A lost start response is recovered without creating another game');
-    loseCommitResponse = true;
-    assert.equal((await cloudPost('answer',{gameToken:restoredStart.gameToken,questionId:restoredStart.question.id,choice:0,value:restoredStart.question.options.find(value=>value!==orderedQuestions[0].answer)})).status,503);
-    const restoredFinish = await cloudPost('state',{gameToken:restoredStart.gameToken});
-    assert.equal(restoredFinish.resultSaved,true); assert.equal(restoredFinish.score,0);
-
-    const totalBefore = (await createFirebaseRanking(env,VERSION).leaderboard()).total;
-    const games = await Promise.all(Array.from({length:100},(_,i)=>cloudPost('start',{nickname:`Carga ${i}`,avatar:3,requestId:crypto.randomUUID(),playerToken:crypto.randomUUID()})));
-    assert.ok(games.every(game=>game.status===200));
-    const finishes = await Promise.all(games.map(game=>cloudPost('answer',{gameToken:game.gameToken,questionId:game.question.id,choice:0,value:game.question.options.find(value=>value!==orderedQuestions[0].answer)})));
-    assert.ok(finishes.every(result=>result.status===200&&result.resultSaved&&result.score===0));
-    assert.equal((await createFirebaseRanking(env,VERSION).leaderboard()).total,totalBefore+100,'100 simultaneous independent games retain every record');
+    const recovered=await cloudPost('start',lostStart);assert.equal(recovered.status,200);assert.equal(recovered.lives,10);
+    const answerBody={gameToken:recovered.gameToken,questionId:recovered.question.id,choice:0,value:recovered.question.options.find(v=>v!==orderedQuestions[0].answer)};
+    loseCommitResponse=true;assert.equal((await cloudPost('answer',answerBody)).status,503);
+    const feedback=await cloudPost('state',{gameToken:recovered.gameToken});assert.equal(feedback.lives,9);assert.equal(feedback.answer,orderedQuestions[0].answer);
+    assert.equal((await cloudPost('answer',answerBody)).lives,9);
+    for(let i=0;i<8;i++){const q=await cloudPost('next',{gameToken:recovered.gameToken});await cloudPost('answer',{gameToken:recovered.gameToken,questionId:q.question.id,choice:0,value:q.question.options.find(v=>v!==orderedQuestions[q.number-1].answer)});}
+    const last=await cloudPost('next',{gameToken:recovered.gameToken});rankingOutage=true;
+    const finished=await cloudPost('answer',{gameToken:recovered.gameToken,questionId:last.question.id,choice:0,value:last.question.options.find(v=>v!==orderedQuestions[last.number-1].answer)});
+    assert.equal(finished.resultSaved,true);assert.equal(finished.rankingPending,true);assert.equal(finished.lives,0);
+    rankingOutage=false;assert.ok(Number.isInteger((await cloudPost('state',{gameToken:recovered.gameToken})).rank));
+    const totalBefore=(await createFirebaseRanking(env,VERSION).leaderboard()).total;
+    const games=await Promise.all(Array.from({length:100},(_,i)=>cloudPost('start',{nickname:'Carga '+i,avatar:3,playerToken:crypto.randomUUID()})));
+    assert.ok(games.every(g=>g.status===200));
+    for(let round=0;round<10;round++){
+      const feedbacks=await Promise.all(games.map(async g=>{const q=round===0?g:await cloudPost('next',{gameToken:g.gameToken});return cloudPost('answer',{gameToken:g.gameToken,questionId:q.question.id,choice:0,value:q.question.options.find(v=>v!==orderedQuestions[q.number-1].answer)});}));
+      assert.ok(feedbacks.every(r=>r.status===200&&r.lives===9-round));
+    }
+    assert.equal((await createFirebaseRanking(env,VERSION).leaderboard()).total,totalBefore+100);
     const callsBefore = queryCalls;
     const cachedEnv = {...env,FIREBASE_CACHE_MS:'15000'};
     await Promise.all(Array.from({length:100},()=>createFirebaseRanking(cachedEnv,VERSION).leaderboard()));

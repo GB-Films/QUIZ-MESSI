@@ -1,7 +1,7 @@
 import { orderedQuestions } from '../dist/questions.js';
 import { firebaseEnabled, createFirebaseRanking } from './firestore.js';
 import { createFirebaseGames } from './firebase-games.js';
-import { VERSION, TIME, uuidPattern, digest, fail, cleanName, publicGame } from './quiz-rules.js';
+import { VERSION, TIME, RULES_VERSION, uuidPattern, digest, fail, cleanName, publicGame, deviceGameId, newGame, readyGame, feedback, expired, applyAnswer } from './quiz-rules.js';
 
 export { VERSION } from './quiz-rules.js';
 const ORIGINS = new Set(['https://gb-films.github.io','http://127.0.0.1:4173','http://localhost:4173']);
@@ -23,86 +23,55 @@ async function result(db, game, firebase) {
     const best = await firebase.saveBest(player);
     const [rank, board] = await Promise.all([firebase.rank(best), firebase.leaderboard()]);
     return {phase:'done',score:game.score,elapsedMs:game.elapsed_ms,reason:game.reason,avatar:game.avatar,nickname:game.nickname,
-      bestScore:best.score,rank,playerId:player.public_id,...board};
+      bestScore:best.score,rank,playerId:player.public_id,...board,...feedback(game)};
   }
   const above = await query(db, `SELECT COUNT(*) AS n FROM quiz_players WHERE version=? AND score>=0 AND
     (score>? OR (score=? AND elapsed_ms<?) OR (score=? AND elapsed_ms=? AND updated_at<?))`,
     [VERSION,player.score,player.score,player.elapsed_ms,player.score,player.elapsed_ms,player.updated_at]).first();
   return {phase:'done',score:game.score,elapsedMs:game.elapsed_ms,reason:game.reason,avatar:game.avatar,nickname:game.nickname,
-    bestScore:player.score,rank:above.n+1,playerId:player.public_id,...await leaderboard(db)};
+    bestScore:player.score,rank:above.n+1,playerId:player.public_id,...await leaderboard(db),...feedback(game)};
 }
-async function start(db, body, request, now) {
-  const nickname = cleanName(body.nickname);
-  if(!Number.isInteger(body.avatar)||body.avatar<1||body.avatar>4) fail('Elegí un personaje.');
-  const ip = await digest((request.headers.get('cf-connecting-ip')||'local')+new Date(now).toISOString().slice(0,10));
-  const rate = await query(db,'SELECT COUNT(*) AS n FROM quiz_games WHERE ip_bucket=? AND created_at>?',[ip,now-3600000]).first();
-  if(rate.n>=40) fail('Llegaste al límite de partidas por hora. Volvé más tarde.',429);
-  let playerToken = typeof body.playerToken==='string'&&uuidPattern.test(body.playerToken)?body.playerToken:null;
-  let hash = playerToken ? await digest(playerToken) : null;
-  let player = hash ? await query(db,'SELECT * FROM quiz_players WHERE token_hash=?',[hash]).first() : null;
-  if(!player){
-    playerToken=crypto.randomUUID();hash=await digest(playerToken);
-    await query(db,'INSERT INTO quiz_players (token_hash,public_id,nickname,avatar,version,updated_at) VALUES (?,?,?,?,?,?)',
-      [hash,crypto.randomUUID(),nickname,body.avatar,VERSION,now]).run();
-  } else if(player.version!==VERSION) {
-    await query(db,'UPDATE quiz_players SET score=-1, elapsed_ms=0, version=?, updated_at=? WHERE token_hash=?',[VERSION,now,hash]).run();
+async function start(db, body, request, now, firebase) {
+  const nickname=cleanName(body.nickname);
+  if(!Number.isInteger(body.avatar)||body.avatar<1||body.avatar>4)fail('Elegí un personaje.');
+  const token=typeof body.playerToken==='string'&&uuidPattern.test(body.playerToken)?body.playerToken:crypto.randomUUID();
+  const hash=await digest(token),id=await deviceGameId(hash);
+  let game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[id]).first();
+  if(!game){
+    const ip=await digest((request.headers.get('cf-connecting-ip')||'local')+new Date(now).toISOString().slice(0,10));
+    const rate=await query(db,'SELECT COUNT(*) AS n FROM quiz_games WHERE ip_bucket=? AND created_at>?',[ip,now-3600000]).first();
+    if(rate.n>=40)fail('Llegaste al límite de partidas por hora. Volvé más tarde.',429);
+    await query(db,'INSERT OR IGNORE INTO quiz_players (token_hash,public_id,nickname,avatar,version,updated_at) VALUES (?,?,?,?,?,?)',[hash,crypto.randomUUID(),nickname,body.avatar,VERSION,now]).run();
+    game=newGame(id,hash,nickname,body.avatar,now);
+    await query(db,'INSERT OR IGNORE INTO quiz_games (id,player_hash,nickname,avatar,phase,issued_at,deadline,version,ip_bucket,created_at,lives,rules_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',[id,hash,nickname,body.avatar,'active',now,now+TIME,VERSION,ip,now,game.lives,RULES_VERSION]).run();
   }
-  const id=crypto.randomUUID();
-  await query(db,`INSERT INTO quiz_games (id,player_hash,nickname,avatar,phase,issued_at,deadline,version,ip_bucket,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?)`,[id,hash,nickname,body.avatar,'active',now,now+TIME,VERSION,ip,now]).run();
-  const game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[id]).first();
-  return {gameToken:id,playerToken,...publicGame(game,now)};
+  return {gameToken:id,playerToken:token,...await gameAction(db,'state',{gameToken:id},now,firebase)};
 }
-async function gameAction(db, action, body, now, firebase) {
-  if(typeof body.gameToken!=='string'||!uuidPattern.test(body.gameToken)) fail('Partida no encontrada.',404);
+async function gameAction(db,action,body,now,firebase){
+  if(typeof body.gameToken!=='string'||!uuidPattern.test(body.gameToken))fail('Partida no encontrada.',404);
   let game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[body.gameToken]).first();
-  if(!game) fail('Partida no encontrada.',404);
-  if(game.version!==VERSION) fail('El quiz se actualizó. Empezá una partida nueva.',409);
-  if(game.phase==='done') return result(db,game,firebase);
+  if(!game)fail('Partida no encontrada.',404);
+  if(game.rules_version!==RULES_VERSION)fail('El quiz se actualizó. Volvé al inicio para entrar a la nueva edición.',409);
+  if(game.phase==='done')return result(db,game,firebase);
   if(action==='next'){
-    if(game.phase!=='ready') fail('Primero respondé la pregunta actual.',409);
-    await query(db,`UPDATE quiz_games SET phase='active', issued_at=?, deadline=? WHERE id=? AND phase='ready' AND cursor=?`,
-      [now,now+TIME,game.id,game.cursor]).run();
-    game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
-    return publicGame(game,now);
+    if(game.phase==='active')return publicGame(game,now);
+    await query(db,"UPDATE quiz_games SET phase='active',issued_at=?,deadline=? WHERE id=? AND phase='ready' AND cursor=?",[now,now+TIME,game.id,game.cursor]).run();
+    return publicGame(await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first(),now);
   }
-  if(action==='state') {
-    if(game.phase==='active'&&now>=game.deadline) {
-      await query(db,`UPDATE quiz_games SET phase='done', reason='timeout', finished_at=?, elapsed_ms=elapsed_ms+? WHERE id=? AND phase='active' AND cursor=?`,
-        [now,TIME,game.id,game.cursor]).run();
-      game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
-      if(game.phase==='done')return result(db,game,firebase);
-      return game.phase==='ready'?{phase:'ready',score:game.score}:publicGame(game,now);
-    }
-    if(game.phase==='ready') return {phase:'ready',score:game.score};
-    return publicGame(game,now);
-  }
-  if(action!=='answer') fail('Operación no encontrada.',404);
-  const item=orderedQuestions[game.cursor];
-  // Idempotencia: un reintento de una respuesta ya aceptada no consume otra pregunta.
-  if(game.phase==='ready') {
-    if(orderedQuestions[game.cursor-1]?.id===body.questionId) return {phase:'ready',correct:true,score:game.score};
+  if(action==='state'){
+    if(game.phase==='ready')return readyGame(game);
+    if(!expired(game,now))return publicGame(game,now);
+    body={...body,questionId:orderedQuestions[game.cursor].id,choice:null};
+  }else if(action!=='answer')fail('Operación no encontrada.',404);
+  if(game.phase==='ready'){
+    if(orderedQuestions[game.cursor-1]?.id===body.questionId)return readyGame(game);
     fail('La pregunta cambió.',409);
   }
-  if(body.questionId!==item.id) fail('La pregunta cambió.',409);
-  if(body.choice!==null&&(!Number.isInteger(body.choice)||body.choice<0||body.choice>3)) fail('Respuesta inválida.');
-  // El cliente envía el valor elegido, no el puntaje ni el índice barajado como respuesta definitiva.
-  const choice=body.value;
-  if(body.choice!==null&&(!item.options.includes(choice)||typeof choice!=='string')) fail('Respuesta inválida.');
-  if(body.choice===null&&now<game.deadline) return publicGame(game,now);
-  const expired=now>=game.deadline;
-  const correct=!expired&&body.choice!==null&&choice===item.answer;
-  const score=game.score+(correct?1:0);
-  const finished=!correct||score===orderedQuestions.length;
-  const elapsed=Math.max(0,Math.min(TIME,now-game.issued_at));
-  const reason=expired?'timeout':correct?'complete':'wrong';
-  const update=await query(db,`UPDATE quiz_games SET score=?,cursor=?,phase=?,reason=?,finished_at=?,elapsed_ms=elapsed_ms+?
-    WHERE id=? AND phase='active' AND cursor=? AND deadline=?`,
-    [score,game.cursor+(correct?1:0),finished?'done':'ready',finished?reason:null,finished?now:null,elapsed,game.id,game.cursor,game.deadline]).run();
+  const previousCursor=game.cursor;
+  if(!applyAnswer(game,body,now))return publicGame(game,now);
+  await query(db,"UPDATE quiz_games SET score=?,cursor=?,phase=?,reason=?,finished_at=?,elapsed_ms=?,lives=?,last_correct=?,last_reason=? WHERE id=? AND phase='active' AND cursor=? AND deadline=?",[game.score,game.cursor,game.phase,game.reason,game.finished_at,game.elapsed_ms,game.lives,game.last_correct,game.last_reason,game.id,previousCursor,game.deadline]).run();
   game=await query(db,'SELECT * FROM quiz_games WHERE id=?',[game.id]).first();
-  if(game.phase==='done') return result(db,game,firebase);
-  if(update.meta.changes===0) return {phase:'ready',correct:true,score:game.score};
-  return {phase:'ready',correct:true,score,answer:item.answer,explanation:item.explanation};
+  return game.phase==='done'?result(db,game,firebase):readyGame(game);
 }
 
 export default {
@@ -128,7 +97,7 @@ export default {
       let body;try{body=JSON.parse(raw);}catch{fail('Formato inválido.');}
       if(!body||typeof body!=='object'||Array.isArray(body)) fail('Formato inválido.');
       const now=Date.now();
-      if(url.pathname==='/api/start') return json(await (cloudGames?cloudGames.start(body,now):start(env.DB,body,request,now)));
+      if(url.pathname==='/api/start') return json(await (cloudGames?cloudGames.start(body,now):start(env.DB,body,request,now,firebase)));
       const action=url.pathname.match(/^\/api\/(answer|next|state)$/)?.[1];
       if(!action) return json({error:'No encontrado.'},404);
       return json(await (cloudGames?cloudGames.action(action,body,now):gameAction(env.DB,action,body,now,firebase)));

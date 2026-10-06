@@ -2,7 +2,11 @@
 
 125 preguntas sobre Lionel Messi con la Selección Argentina, ordenadas de muy fácil a experto. Incluye Mundiales, Copa América, Eliminatorias, amistosos, Sub-20 y Juegos Olímpicos.
 
-Una vida por partida, diez segundos por pregunta. El primer error o el tiempo agotado termina el juego. Al acertar se habilita la siguiente pregunta; el nuevo reloj comienza al abrirla. La pantalla de juego mantiene las cuatro opciones y el botón siguiente visibles en el celular.
+Diez vidas totales por navegador, diez segundos por pregunta. Cada error o tiempo agotado consume una vida y muestra la respuesta correcta con su explicación. Luego se avanza a la siguiente pregunta, sin sumar un acierto por la que se falló. El reloj de la siguiente comienza al abrirla. El progreso y las vidas se guardan en el servidor: recargar, cambiar el nombre o repetir un inicio conserva la misma partida. Al perder las diez vidas, el juego queda bloqueado para esa identidad.
+
+La pregunta 125 es «¿Quién es el mejor jugador de la historia?»: Lionel, Andrés, Messi y Cuccittini son respuestas correctas. Este cierre no tiene reloj, suma un acierto con cualquiera de las cuatro opciones y termina el recorrido. Completar el quiz también cierra la partida.
+
+El navegador conserva un identificador privado. No es una verificación del dispositivo físico: cambiar de navegador, usar una sesión privada o borrar sus datos puede crear otra identidad. Un límite estricto entre navegadores requiere identificación adicional.
 
 Antes de empezar se elige el nombre. Al terminar, los aciertos de esa partida determinan qué Messi sos, con una foto real de su historia. El ranking muestra la foto ganada por el mejor récord de cada jugador, además de su posición global. Compartir incluye el Messi ganado y el puntaje.
 
@@ -80,7 +84,7 @@ Estado del trabajo al 6 de octubre de 2026:
 
 Para seguir con Codex en otra computadora, abrir este repositorio y pedirle que lea este README y `backend/SCALING.md`. Iniciar sesión con la misma cuenta de Codex/Sites y la cuenta de Google del proyecto para administrar los recursos existentes. No crear otro proyecto de Firebase, otro Site ni volver a importar la copia anterior de los resultados.
 
-El servidor se publica por **Sites**, separado de GitHub Pages. Su ID es `appgprj_6ac470987bf081918291e55728c8818a`. La versión publicada del guardado en Firebase es la 3, con fuente `46977916a3566895229c6a65c49387285bc99ad9` en el repositorio administrado por Sites. Abrir primero esa fuente mediante el flujo de Sites antes de editar o publicar el servidor. Sincronizar desde este repositorio los archivos de `backend/` y `dist/questions.js` que se hayan modificado; construir con `npm run build` en el checkout del servicio. Las fotos y la interfaz actual están en este repositorio de GitHub Pages.
+El servidor se publica por **Sites**, separado de GitHub Pages. Su ID es `appgprj_6ac470987bf081918291e55728c8818a`. La versión publicada del servidor es la 4, con fuente `dd4162202268312b7401cf7fa885f250e7a1428d` en el repositorio administrado por Sites. La edición con diez vidas usa `RULES_VERSION=2`. Abrir primero esa fuente mediante el flujo de Sites antes de editar o publicar el servidor. Sincronizar desde este repositorio los archivos de `backend/` y `dist/questions.js` que se hayan modificado; construir con `npm run build` en el checkout del servicio. Las fotos y la interfaz actual están en este repositorio de GitHub Pages.
 
 `backend/hosting.sites.json` conserva el manifiesto de referencia del servicio, sin credenciales. El checkout de Sites utiliza ese manifiesto como `.openai/hosting.json`; la compilación del servidor se realiza allí para mantener los archivos del servidor fuera de la web de Pages.
 
@@ -113,6 +117,14 @@ Se usan veintidós imágenes existentes. Cada resultado enlaza la fuente de su f
 
 ## Preguntas
 
-El banco está en `dist/questions.js`. La cifra de 125 preguntas usa los goles de la Selección mayor informados por la AFA, verificados el 6 de octubre de 2026. Es una edición fija, sin actualizaciones automáticas.
+El banco está en `dist/questions.js`. El Excel revisado está en `outputs/quiz-messi-20261006/Quiz-Messi-preguntas.xlsx`: conserva las modificaciones del usuario, completa cuatro preguntas vacías, reemplaza un duplicado sobre Sudáfrica 2010 y corrige respuestas, redacción y explicaciones. La columna «Fuente de revisión» enlaza las referencias de los cambios. La cifra de 125 preguntas usa los goles de la Selección mayor informados por la AFA, verificados el 6 de octubre de 2026. Es una edición fija, sin actualizaciones automáticas.
 
 Quiz independiente, sin afiliación oficial con Lionel Messi, la AFA o la FIFA.
+
+## Edición de diez vidas
+
+`RULES_VERSION=2` separa las partidas del banco nuevo de las anteriores. El ranking y sus récords existentes se conservan. La identidad recibe una única partida de esta edición, cuyo ID se deriva de su token privado y de la versión de reglas; variar `requestId` no genera otra partida. No se exponen el token ni ese vínculo en el ranking. El servidor valida los aciertos y las vidas, y las respuestas repetidas devuelven la misma explicación.
+
+Para el motor alternativo SQLite/D1, aplicar `drizzle/0001_ten_lives.sql`, una migración aditiva que conserva las tablas y datos anteriores. La vista previa y las pruebas la aplican automáticamente. Firestore no necesita una migración de esquema ni cambios de permisos. Las reglas actuales siguen admitiendo las mismas colecciones.
+
+Las pruebas recorren el banco completo y comprueban las cuatro opciones finales, el fin con errores previos, el bloqueo a cero vidas, los tiempos agotados, la recuperación de la explicación y las solicitudes simultáneas tanto en SQLite como en Firestore simulado.
